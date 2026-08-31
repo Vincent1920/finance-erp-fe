@@ -21,3 +21,14 @@ export interface ApiErrorResponse {
   requestId?: string
 }
 export type RequestState = 'idle' | 'loading' | 'success' | 'error'
+
+export type QueryValue = string | number | boolean | null | undefined
+
+export interface ListQuery {
+  page?: number
+  limit?: number
+  search?: string
+  sort?: string
+  order?: 'asc' | 'desc'
+  [key: string]: QueryValue
+}

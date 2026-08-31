@@ -1,5 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { moduleRoutes } from './module.routes'
+import { getStoredToken } from '@/utils/auth-storage'
 const protectedMeta = (title: string, permission?: string) => ({
   title,
   permission,
@@ -9,12 +10,21 @@ export const appRoutes: RouteRecordRaw = {
   path: '/',
   component: () => import('@/layouts/DashboardLayout.vue'),
   children: [
-    { path: '', redirect: '/dashboard' },
+    {
+      path: '',
+      redirect: () => getStoredToken() ? '/dashboard' : '/login',
+    },
     {
       path: 'dashboard',
       name: 'dashboard',
       component: () => import('@/views/dashboard/DashboardView.vue'),
       meta: protectedMeta('Dashboard', 'dashboard.view'),
+    },
+    {
+      path: 'forbidden',
+      name: 'forbidden',
+      component: () => import('@/views/common/AccessDeniedView.vue'),
+      meta: protectedMeta('Akses Ditolak'),
     },
     {
       path: 'master/accounts',

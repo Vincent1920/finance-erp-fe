@@ -5,6 +5,7 @@ declare module 'vue-router' {
     title?: string
     requiresAuth?: boolean
     permission?: string
+    permissions?: readonly string[]
     report?: string
   }
 }
