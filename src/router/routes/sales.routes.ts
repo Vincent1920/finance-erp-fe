@@ -11,5 +11,5 @@ export const salesRoutes: RouteRecordRaw[] = [
   { path: '/sales/invoices/:id/edit', name: 'sales-invoices-edit', component: () => import('@/views/sales/invoices/SalesInvoiceFormView.vue'), meta: { title: 'Edit Sales Invoice', requiresAuth: true, permission: 'sales-invoices.update' } },
   { path: '/sales/invoices/:id', name: 'sales-invoices-detail', component: () => import('@/views/sales/invoices/SalesInvoiceDetailView.vue'), meta: { title: 'Detail Sales Invoice', requiresAuth: true, permission: 'sales-invoices.view' } },
   createModuleRoute('/sales/returns', 'Retur Penjualan'),
-  createModuleRoute('/sales/receivables', 'Piutang Usaha'),
+  { path: '/sales/receivables', name: 'receivables', component: () => import('@/views/sales/receivables/ReceivableView.vue'), meta: { title: 'Piutang Usaha', requiresAuth: true, permission: 'receivables.view' } },
 ]

@@ -67,7 +67,7 @@ export const menu: MenuItem[] = [
     ['Sales Order', '/sales/orders', 'sales-orders.view'],
     ['Sales Invoice', '/sales/invoices', 'sales-invoices.view'],
     ['Retur Penjualan', '/sales/returns', 'sales.view'],
-    ['Piutang', '/sales/receivables', 'sales.view'],
+    ['Piutang', '/sales/receivables', 'receivables.view'],
   ]),
   createMenuGroup('Pembelian', PackageCheck, [
     ['Purchase Order', '/purchases/orders', 'purchases.view'],
