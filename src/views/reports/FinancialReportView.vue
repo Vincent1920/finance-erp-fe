@@ -1,115 +1,204 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { Download, Printer, CheckCircle2 } from 'lucide-vue-next'
+import { CheckCircle2, Download, Printer, RefreshCw, XCircle } from 'lucide-vue-next'
 import AppBreadcrumb from '@/components/layout/AppBreadcrumb.vue'
 import AppButton from '@/components/common/AppButton.vue'
+import {
+  reportService,
+  type BalanceSheetReport,
+  type CashFlowReport,
+  type ProfitLossReport,
+  type ReportAccountLine,
+} from '@/services/report.service'
+import { useNotificationStore } from '@/stores/notification.store'
+import { getApiErrorMessage } from '@/utils/error'
 import { formatCurrency } from '@/utils/currency'
+
+interface ReportLine {
+  label: string
+  value?: number
+  kind?: 'header' | 'total'
+}
+
 const route = useRoute()
-type ReportSection = [label: string, value: number]
-
-const reportTitles: Record<string, string> = {
-  'profit-loss': 'Laporan Laba Rugi',
-  'balance-sheet': 'Neraca',
-  'cash-flow': 'Laporan Arus Kas',
-}
-
-const reportSections: Record<string, ReportSection[]> = {
-  'balance-sheet': [
-    ['ASET', 0],
-    ['Kas dan Bank', 1250000000],
-    ['Piutang Usaha', 485750000],
-    ['Persediaan', 738200000],
-    ['Aset Tetap', 441000000],
-    ['Total Aset', 2914950000],
-    ['LIABILITAS & EKUITAS', 0],
-    ['Utang Usaha', 326400000],
-    ['Liabilitas Lainnya', 368550000],
-    ['Modal dan Laba Ditahan', 2220000000],
-    ['Total Liabilitas & Ekuitas', 2914950000],
-  ],
-  'cash-flow': [
-    ['AKTIVITAS OPERASI', 0],
-    ['Penerimaan dari pelanggan', 1420000000],
-    ['Pembayaran pemasok & karyawan', -925000000],
-    ['Kas Bersih dari Operasi', 495000000],
-    ['AKTIVITAS INVESTASI', 0],
-    ['Pembelian aset tetap', -120000000],
-    ['AKTIVITAS PENDANAAN', 0],
-    ['Pembayaran dividen', -50000000],
-    ['Kenaikan Bersih Kas', 325000000],
-    ['Saldo Kas Akhir', 1250000000],
-  ],
-  'profit-loss': [
-    ['PENDAPATAN', 0],
-    ['Penjualan Bersih', 892300000],
-    ['Pendapatan Lain', 24500000],
-    ['Total Pendapatan', 916800000],
-    ['HARGA POKOK PENJUALAN', -514900000],
-    ['Laba Kotor', 401900000],
-    ['BEBAN OPERASIONAL', 0],
-    ['Beban Penjualan', -68400000],
-    ['Beban Umum & Administrasi', -92100000],
-    ['Laba Sebelum Pajak', 241400000],
-    ['Beban Pajak', -23800000],
-    ['Laba Bersih', 217600000],
-  ],
-}
+const notifications = useNotificationStore()
+const today = new Date().toISOString().slice(0, 10)
+const dateFrom = ref(`${today.slice(0, 8)}01`)
+const dateTo = ref(today)
+const isLoading = ref(false)
+const errorMessage = ref('')
+const lines = ref<ReportLine[]>([])
+const balanced = ref<boolean | null>(null)
+const difference = ref(0)
 
 const reportKind = computed(() => String(route.meta.report || 'profit-loss'))
-const reportTitle = computed(() => reportTitles[reportKind.value] || 'Laporan Keuangan')
-const sections = computed(() => reportSections[reportKind.value] || reportSections['profit-loss'])
+const reportTitle = computed(
+  () =>
+    ({
+      'profit-loss': 'Laporan Laba Rugi',
+      'balance-sheet': 'Neraca',
+      'cash-flow': 'Laporan Arus Kas',
+    })[reportKind.value] ?? 'Laporan Keuangan',
+)
 
-const getSectionClass = (label: string, value: number) => {
-  if (value === 0) {
-    return 'mt-3 bg-slate-50 px-3 text-xs font-bold tracking-widest text-slate-500'
+const accountLines = (accounts: ReportAccountLine[], sign = 1): ReportLine[] =>
+  accounts.map((account) => ({
+    label: `${account.code} · ${account.name}`,
+    value: Number(account.amount) * sign,
+  }))
+
+const mapProfitLoss = (report: ProfitLossReport): ReportLine[] => [
+  { label: 'PENDAPATAN', kind: 'header' },
+  ...accountLines(report.sections.revenue?.accounts ?? []),
+  { label: 'Total Pendapatan', value: Number(report.sections.revenue?.total ?? 0), kind: 'total' },
+  { label: 'HARGA POKOK PENJUALAN', kind: 'header' },
+  ...accountLines(report.sections.cogs?.accounts ?? [], -1),
+  { label: 'Laba Kotor', value: Number(report.grossProfit), kind: 'total' },
+  { label: 'BEBAN OPERASIONAL', kind: 'header' },
+  ...accountLines(report.sections.operatingExpenses?.accounts ?? [], -1),
+  { label: 'Laba Operasional', value: Number(report.operatingProfit), kind: 'total' },
+  { label: 'PENDAPATAN / BEBAN LAIN', kind: 'header' },
+  ...accountLines(report.sections.otherIncome?.accounts ?? []),
+  ...accountLines(report.sections.otherExpense?.accounts ?? [], -1),
+  { label: 'Laba Sebelum Pajak', value: Number(report.profitBeforeTax), kind: 'total' },
+  ...accountLines(report.sections.tax?.accounts ?? [], -1),
+  { label: 'Laba Bersih', value: Number(report.netProfit), kind: 'total' },
+]
+
+const mapBalanceSheet = (report: BalanceSheetReport): ReportLine[] => [
+  { label: 'ASET', kind: 'header' },
+  ...accountLines(report.sections.assets.accounts),
+  { label: 'Total Aset', value: Number(report.assets), kind: 'total' },
+  { label: 'LIABILITAS', kind: 'header' },
+  ...accountLines(report.sections.liabilities.accounts),
+  { label: 'Total Liabilitas', value: Number(report.liabilities), kind: 'total' },
+  { label: 'EKUITAS', kind: 'header' },
+  ...accountLines(report.sections.equity.accounts),
+  { label: 'Laba Tahun Berjalan', value: Number(report.sections.equity.currentYearEarnings) },
+  { label: 'Total Ekuitas', value: Number(report.equity), kind: 'total' },
+  {
+    label: 'Total Liabilitas & Ekuitas',
+    value: Number(report.liabilitiesAndEquity),
+    kind: 'total',
+  },
+]
+
+const mapCashFlow = (report: CashFlowReport): ReportLine[] => [
+  { label: 'AKTIVITAS OPERASI', kind: 'header' },
+  { label: 'Arus Kas Operasi', value: Number(report.activities.operating), kind: 'total' },
+  { label: 'AKTIVITAS INVESTASI', kind: 'header' },
+  { label: 'Arus Kas Investasi', value: Number(report.activities.investing), kind: 'total' },
+  { label: 'AKTIVITAS PENDANAAN', kind: 'header' },
+  { label: 'Arus Kas Pendanaan', value: Number(report.activities.financing), kind: 'total' },
+  { label: 'Saldo Kas Awal', value: Number(report.openingBalance) },
+  { label: 'Perubahan Bersih Kas', value: Number(report.netChange), kind: 'total' },
+  { label: 'Saldo Kas Akhir', value: Number(report.endingBalance), kind: 'total' },
+]
+
+const fetchReport = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+  balanced.value = null
+  try {
+    if (reportKind.value === 'balance-sheet') {
+      const report = await reportService.balanceSheet(dateTo.value)
+      lines.value = mapBalanceSheet(report)
+      balanced.value = report.balanced
+      difference.value = Number(report.difference)
+    } else if (reportKind.value === 'cash-flow') {
+      const report = await reportService.cashFlow(dateFrom.value, dateTo.value)
+      lines.value = mapCashFlow(report)
+      balanced.value = report.reconciled
+      difference.value = Number(report.difference)
+    } else {
+      lines.value = mapProfitLoss(await reportService.profitLoss(dateFrom.value, dateTo.value))
+    }
+  } catch (error) {
+    lines.value = []
+    errorMessage.value = getApiErrorMessage(error, 'Laporan gagal dimuat dari server.')
+  } finally {
+    isLoading.value = false
   }
-
-  const isTotal = label.startsWith('Total') || label.includes('Laba') || label.includes('Kas Akhir')
-
-  return isTotal ? 'font-bold' : 'pl-5 text-sm'
 }
+
+const exportCsv = () => {
+  const csv = [
+    'Keterangan,Nilai',
+    ...lines.value.map((line) => `"${line.label.replaceAll('"', '""')}",${line.value ?? ''}`),
+  ].join('\r\n')
+  const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${reportKind.value}-${dateTo.value}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+  notifications.push('Laporan berhasil diekspor.')
+}
+
+const printReport = () => window.print()
+
+watch(reportKind, fetchReport)
+onMounted(fetchReport)
 </script>
+
 <template>
   <div>
     <AppBreadcrumb />
     <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold">{{ reportTitle }}</h1>
-        <p class="mt-1 text-sm text-slate-500">
-          Periode yang berakhir 31 Agustus 2026 · PT Finora Indonesia
-        </p>
+        <p class="mt-1 text-sm text-slate-500">Data berasal dari jurnal yang sudah diposting.</p>
       </div>
       <div class="flex gap-2">
-        <AppButton variant="secondary" :icon="Printer">Cetak</AppButton>
-        <AppButton :icon="Download">Ekspor</AppButton>
+        <AppButton variant="secondary" :icon="Printer" :disabled="isLoading" @click="printReport">
+          Cetak
+        </AppButton>
+        <AppButton :icon="Download" :disabled="isLoading || !lines.length" @click="exportCsv">
+          Ekspor CSV
+        </AppButton>
       </div>
     </div>
     <section class="panel mx-auto max-w-4xl p-5 md:p-8">
       <div class="mb-6 flex flex-wrap gap-3">
-        <input type="date" value="2026-08-01" class="field w-auto" />
-        <input type="date" value="2026-08-31" class="field w-auto" />
-        <AppButton variant="secondary">Terapkan</AppButton>
+        <input v-if="reportKind !== 'balance-sheet'" v-model="dateFrom" type="date" class="field w-auto" />
+        <input v-model="dateTo" type="date" class="field w-auto" />
+        <AppButton variant="secondary" :icon="RefreshCw" :loading="isLoading" @click="fetchReport">
+          Terapkan
+        </AppButton>
       </div>
-      <div class="divide-y">
+      <div v-if="errorMessage" class="rounded-lg bg-red-50 p-4 text-sm text-red-700">
+        {{ errorMessage }}
+      </div>
+      <div v-else-if="isLoading" class="space-y-3">
+        <div v-for="index in 8" :key="index" class="h-9 animate-pulse rounded bg-slate-100" />
+      </div>
+      <div v-else-if="lines.length" class="divide-y">
         <div
-          v-for="([label, value], i) in sections"
-          :key="i"
+          v-for="(line, index) in lines"
+          :key="`${line.label}-${index}`"
           class="flex justify-between gap-4 py-3"
-          :class="getSectionClass(label, value)"
+          :class="{
+            'mt-3 bg-slate-50 px-3 text-xs font-bold tracking-widest text-slate-500': line.kind === 'header',
+            'font-bold': line.kind === 'total',
+            'pl-5 text-sm': !line.kind,
+          }"
         >
-          <span>{{ label }}</span>
-          <span v-if="value !== 0" class="tabular-nums" :class="value < 0 && 'text-red-600'">
-            {{ formatCurrency(value) }}
+          <span>{{ line.label }}</span>
+          <span v-if="line.value !== undefined" class="tabular-nums" :class="line.value < 0 && 'text-red-600'">
+            {{ formatCurrency(line.value) }}
           </span>
         </div>
       </div>
+      <p v-else class="py-12 text-center text-sm text-slate-400">Tidak ada data pada periode ini.</p>
       <div
-        v-if="reportKind === 'balance-sheet'"
-        class="mt-6 flex items-center gap-2 rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-700"
+        v-if="balanced !== null && !isLoading && !errorMessage"
+        class="mt-6 flex items-center gap-2 rounded-lg p-3 text-sm font-semibold"
+        :class="balanced ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'"
       >
-        <CheckCircle2 class="h-5 w-5" />
-        Balanced — Aset = Liabilitas + Ekuitas
+        <CheckCircle2 v-if="balanced" class="h-5 w-5" />
+        <XCircle v-else class="h-5 w-5" />
+        {{ balanced ? 'Laporan terrekonsiliasi.' : `Selisih laporan: ${formatCurrency(difference)}` }}
       </div>
     </section>
   </div>
