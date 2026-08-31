@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import MasterDataWorkspace from '@/components/master/MasterDataWorkspace.vue'
-import { accountWorkspaceConfig } from '@/views/master/masterConfigs'
+import { taxCodeWorkspaceConfig } from '@/views/master/masterConfigs'
 </script>
 
 <template>
-  <MasterDataWorkspace :config="accountWorkspaceConfig" />
+  <MasterDataWorkspace :config="taxCodeWorkspaceConfig" />
 </template>
