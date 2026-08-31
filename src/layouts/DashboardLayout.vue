@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 const isSidebarCollapsed = ref(false)
 const isMobileSidebarOpen = ref(false)
+const router = useRouter()
 
-const handleOpenSearch = () => {
+const handleOpenSearch = async () => {
+  if (router.currentRoute.value.path !== '/search') await router.push('/search')
+  await nextTick()
   window.dispatchEvent(new CustomEvent('open-global-search'))
 }
 
@@ -47,7 +51,7 @@ onUnmounted(() => removeEventListener('keydown', handleSearchShortcut))
       <AppHeader @menu="isMobileSidebarOpen = true" @search="handleOpenSearch" />
       <main class="p-4 md:p-6 lg:p-8"><RouterView /></main>
       <footer class="border-t px-6 py-4 text-center text-xs text-slate-400">
-        © 2026 Finora ERP · Data dummy untuk demonstrasi
+        © 2026 Finora ERP · Data keuangan tersimpan melalui API perusahaan
       </footer>
     </div>
   </div>

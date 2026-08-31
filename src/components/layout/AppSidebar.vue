@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { ChevronDown, Landmark, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next'
 
 import { menu } from '@/data/sidebar'
+import { useAuthStore } from '@/stores/auth.store'
 
 const props = defineProps<{
   collapsed: boolean
@@ -16,9 +17,31 @@ const emit = defineEmits<{
 }>()
 
 const route = useRoute()
+const auth = useAuthStore()
+
+const canAccessMenuItem = (menuItem: {
+  permission?: string
+  permissions?: readonly string[]
+}) =>
+  auth.hasPermission(menuItem.permission) &&
+  (!menuItem.permissions?.length ||
+    menuItem.permissions.some((permission) => auth.hasPermission(permission)))
+
+const visibleMenu = computed(() =>
+  menu
+    .map((menuItem) => ({
+      ...menuItem,
+      children: menuItem.children?.filter(canAccessMenuItem),
+    }))
+    .filter(
+      (menuItem) =>
+        canAccessMenuItem(menuItem) &&
+        (!menuItem.children || menuItem.children.length > 0),
+    ),
+)
 
 const getInitiallyOpenedGroups = (): string[] => {
-  return menu
+  return visibleMenu.value
     .filter((menuItem) => {
       return menuItem.children?.some((childItem) => {
         return childItem.to ? route.path.startsWith(childItem.to) : false
@@ -78,7 +101,7 @@ const handleNavigation = () => emit('navigate')
     </div>
 
     <nav class="flex-1 space-y-1 overflow-y-auto p-3">
-      <template v-for="menuItem in menu" :key="menuItem.label">
+      <template v-for="menuItem in visibleMenu" :key="menuItem.label">
         <RouterLink
           v-if="menuItem.to"
           :to="menuItem.to"
@@ -124,7 +147,7 @@ const handleNavigation = () => emit('navigate')
     </nav>
 
     <div v-if="!props.collapsed" class="border-t p-4 text-xs text-slate-400">
-      PT Finora Indonesia
+      {{ auth.user?.name ?? 'Finance ERP' }}
       <br />
       v0.1.0
     </div>

@@ -2,17 +2,19 @@
 import type { Component } from 'vue'
 withDefaults(
   defineProps<{
+    type?: 'button' | 'submit' | 'reset'
     variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
     loading?: boolean
     disabled?: boolean
     icon?: Component
   }>(),
-  { variant: 'primary' },
+  { type: 'button', variant: 'primary', loading: false, disabled: false },
 )
 defineEmits<{ click: [event: MouseEvent] }>()
 </script>
 <template>
   <button
+    :type="type"
     :disabled="disabled || loading"
     class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
     :class="
