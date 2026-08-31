@@ -79,3 +79,33 @@ export interface SalesOrderPayload {
   lines: SalesOrderLinePayload[]
   version?: number
 }
+
+export type SalesInvoiceStatus = 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'posted' | 'partially_paid' | 'paid' | 'reversed' | 'cancelled'
+export interface SalesInvoiceLine {
+  id: number; line_number: number; item_id: number; item_code: string; item_name: string; item_type: string
+  description: string | null; quantity: string | number; unit_id: number; unit_code: string
+  unit_price: string | number; discount: string | number; discount_percent: string | number
+  tax_code_id: number | null; tax_code: string | null; tax_rate: string | number
+  tax_amount: string | number; subtotal: string | number; revenue_account_id: number
+}
+export interface SalesInvoice {
+  id: number; invoice_number: string; invoice_date: string; due_date: string
+  customer_id: number; customer_code: string; customer_name: string
+  warehouse_id: number | null; warehouse_code: string | null; warehouse_name: string | null
+  sales_order_id: number | null; reference: string | null; notes: string | null
+  currency: string; exchange_rate: string | number; subtotal: string | number; discount: string | number
+  tax: string | number; grand_total: string | number; paid_amount: string | number; outstanding_amount: string | number
+  payment_status: string; status: SalesInvoiceStatus; approval_status: string | null; version: number
+  journal_id: number | null; rejection_reason: string | null; cancellation_reason: string | null
+  created_at: string; created_by_name?: string; line_count?: number; lines?: SalesInvoiceLine[]
+}
+export interface SalesInvoiceLinePayload {
+  item_id: number; description: string | null; quantity: number; unit_id: number
+  unit_price: number; discount: number; discount_percent: number; tax_code_id: number | null
+  revenue_account_id?: number | null
+}
+export interface SalesInvoicePayload {
+  invoice_date: string; due_date: string; customer_id: number; warehouse_id: number | null
+  reference: string | null; notes: string | null; currency: string; exchange_rate: number
+  lines: SalesInvoiceLinePayload[]; version?: number
+}
