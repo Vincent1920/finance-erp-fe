@@ -27,13 +27,20 @@ const optionsFrom = async <T extends EntityRecord>(
   label: (row: T) => string,
   params: Record<string, string | number | boolean> = {},
 ): Promise<WorkspaceOption[]> => {
-  const response = await service.list({ page: 1, limit: 500, sort: 'name', order: 'asc', ...params })
+  const response = await service.list({
+    page: 1,
+    limit: 500,
+    sort: 'name',
+    order: 'asc',
+    ...params,
+  })
   return response.data.map((row) => ({ label: label(row), value: row.id }))
 }
 
 const accountOptions = () =>
   optionsFrom(accountService, (account) => `${account.code} — ${account.name}`, {
     is_active: true,
+    is_header: true,
   })
 const postingAccountOptions = () =>
   optionsFrom(accountService, (account) => `${account.code} — ${account.name}`, {
@@ -103,8 +110,23 @@ export const accountWorkspaceConfig: MasterWorkspaceConfig = {
         { label: 'Kredit', value: 'credit' },
       ],
     },
-    { key: 'parent_id', label: 'Akun induk', type: 'select', nullable: true, valueType: 'number', options: accountOptions },
-    { key: 'level', label: 'Level', type: 'number', required: true, min: 0, max: 10, defaultValue: 0 },
+    {
+      key: 'parent_id',
+      label: 'Akun induk',
+      type: 'select',
+      nullable: true,
+      valueType: 'number',
+      options: accountOptions,
+    },
+    {
+      key: 'level',
+      label: 'Level',
+      type: 'number',
+      required: true,
+      min: 0,
+      max: 10,
+      defaultValue: 0,
+    },
     {
       key: 'cash_flow_category',
       label: 'Kategori arus kas',
@@ -118,9 +140,20 @@ export const accountWorkspaceConfig: MasterWorkspaceConfig = {
       ],
     },
     { key: 'report_group', label: 'Grup laporan', nullable: true, maxLength: 100 },
-    { key: 'is_header', label: 'Akun header', type: 'checkbox', defaultValue: false, help: 'Akun header tidak menerima posting jurnal.' },
+    {
+      key: 'is_header',
+      label: 'Akun header',
+      type: 'checkbox',
+      defaultValue: false,
+      help: 'Akun header tidak menerima posting jurnal.',
+    },
     { key: 'is_posting', label: 'Dapat menerima posting', type: 'checkbox', defaultValue: true },
-    { key: 'allow_manual_journal', label: 'Izinkan jurnal manual', type: 'checkbox', defaultValue: true },
+    {
+      key: 'allow_manual_journal',
+      label: 'Izinkan jurnal manual',
+      type: 'checkbox',
+      defaultValue: true,
+    },
     { key: 'is_active', label: 'Aktif', type: 'checkbox', defaultValue: true },
   ],
   validate: (form) =>
@@ -131,7 +164,8 @@ export const accountWorkspaceConfig: MasterWorkspaceConfig = {
 
 export const periodWorkspaceConfig: MasterWorkspaceConfig = {
   title: 'Periode Akuntansi',
-  description: 'Kelola kalender pembukuan. Penutupan dan pembukaan ulang tetap melalui workflow penutupan.',
+  description:
+    'Kelola kalender pembukuan. Penutupan dan pembukaan ulang tetap melalui workflow penutupan.',
   singular: 'Periode',
   permissionPrefix: 'accounting-periods',
   service: periodService,
@@ -158,7 +192,11 @@ export const periodWorkspaceConfig: MasterWorkspaceConfig = {
   fields: [
     { key: 'year', label: 'Tahun', type: 'number', required: true, min: 2000, max: 2200 },
     {
-      key: 'month', label: 'Bulan', type: 'select', required: true, valueType: 'number',
+      key: 'month',
+      label: 'Bulan',
+      type: 'select',
+      required: true,
+      valueType: 'number',
       options: Array.from({ length: 12 }, (_, index) => ({
         label: new Intl.DateTimeFormat('id-ID', { month: 'long' }).format(new Date(2026, index, 1)),
         value: index + 1,
@@ -167,7 +205,12 @@ export const periodWorkspaceConfig: MasterWorkspaceConfig = {
     { key: 'start_date', label: 'Tanggal mulai', type: 'date', required: true },
     { key: 'end_date', label: 'Tanggal selesai', type: 'date', required: true },
     {
-      key: 'status', label: 'Status', type: 'select', required: true, defaultValue: 'open', readOnlyOnEdit: true,
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      required: true,
+      defaultValue: 'open',
+      readOnlyOnEdit: true,
       help: 'Gunakan menu Tutup Periode untuk mengubah status periode yang sudah dibuat.',
       options: [
         { label: 'Terbuka', value: 'open' },
@@ -175,7 +218,14 @@ export const periodWorkspaceConfig: MasterWorkspaceConfig = {
         { label: 'Ditutup', value: 'closed' },
       ],
     },
-    { key: 'close_notes', label: 'Catatan penutupan', type: 'textarea', nullable: true, span: 2, readOnlyOnEdit: true },
+    {
+      key: 'close_notes',
+      label: 'Catatan penutupan',
+      type: 'textarea',
+      nullable: true,
+      span: 2,
+      readOnlyOnEdit: true,
+    },
   ],
   validate: (form) =>
     String(form.end_date ?? '') < String(form.start_date ?? '')
@@ -208,10 +258,39 @@ export const customerWorkspaceConfig: MasterWorkspaceConfig = {
     { key: 'phone', label: 'Telepon', nullable: true, maxLength: 50 },
     { key: 'city', label: 'Kota', nullable: true, maxLength: 100 },
     { key: 'address', label: 'Alamat', type: 'textarea', nullable: true, span: 2 },
-    { key: 'currency', label: 'Mata uang', required: true, defaultValue: 'IDR', minLength: 3, maxLength: 3 },
-    { key: 'credit_limit', label: 'Limit kredit', type: 'number', required: true, min: 0, step: 0.01, defaultValue: 0 },
-    { key: 'payment_term_days', label: 'Termin (hari)', type: 'number', required: true, min: 0, defaultValue: 0 },
-    { key: 'receivable_account_id', label: 'Akun piutang', type: 'select', nullable: true, valueType: 'number', options: postingAccountOptions },
+    {
+      key: 'currency',
+      label: 'Mata uang',
+      required: true,
+      defaultValue: 'IDR',
+      minLength: 3,
+      maxLength: 3,
+    },
+    {
+      key: 'credit_limit',
+      label: 'Limit kredit',
+      type: 'number',
+      required: true,
+      min: 0,
+      step: 0.01,
+      defaultValue: 0,
+    },
+    {
+      key: 'payment_term_days',
+      label: 'Termin (hari)',
+      type: 'number',
+      required: true,
+      min: 0,
+      defaultValue: 0,
+    },
+    {
+      key: 'receivable_account_id',
+      label: 'Akun piutang',
+      type: 'select',
+      nullable: true,
+      valueType: 'number',
+      options: postingAccountOptions,
+    },
     { key: 'is_active', label: 'Aktif', type: 'checkbox', defaultValue: true },
   ],
 }
@@ -241,9 +320,30 @@ export const supplierWorkspaceConfig: MasterWorkspaceConfig = {
     { key: 'phone', label: 'Telepon', nullable: true, maxLength: 50 },
     { key: 'city', label: 'Kota', nullable: true, maxLength: 100 },
     { key: 'address', label: 'Alamat', type: 'textarea', nullable: true, span: 2 },
-    { key: 'currency', label: 'Mata uang', required: true, defaultValue: 'IDR', minLength: 3, maxLength: 3 },
-    { key: 'payment_term_days', label: 'Termin (hari)', type: 'number', required: true, min: 0, defaultValue: 0 },
-    { key: 'payable_account_id', label: 'Akun utang', type: 'select', nullable: true, valueType: 'number', options: postingAccountOptions },
+    {
+      key: 'currency',
+      label: 'Mata uang',
+      required: true,
+      defaultValue: 'IDR',
+      minLength: 3,
+      maxLength: 3,
+    },
+    {
+      key: 'payment_term_days',
+      label: 'Termin (hari)',
+      type: 'number',
+      required: true,
+      min: 0,
+      defaultValue: 0,
+    },
+    {
+      key: 'payable_account_id',
+      label: 'Akun utang',
+      type: 'select',
+      nullable: true,
+      valueType: 'number',
+      options: postingAccountOptions,
+    },
     { key: 'is_active', label: 'Aktif', type: 'checkbox', defaultValue: true },
   ],
 }
@@ -301,7 +401,9 @@ export const taxCodeWorkspaceConfig: MasterWorkspaceConfig = {
   defaultSort: 'code',
   filters: [
     {
-      key: 'tax_type', label: 'Jenis pajak', options: [
+      key: 'tax_type',
+      label: 'Jenis pajak',
+      options: [
         { label: 'PPN / VAT', value: 'vat' },
         { label: 'Pemotongan', value: 'withholding' },
         { label: 'Lainnya', value: 'other' },
@@ -313,23 +415,53 @@ export const taxCodeWorkspaceConfig: MasterWorkspaceConfig = {
     { key: 'code', label: 'Kode', sortable: true },
     { key: 'name', label: 'Nama pajak', sortable: true },
     { key: 'tax_type', label: 'Jenis' },
-    { key: 'rate', label: 'Tarif', align: 'right', format: (value) => `${Number(value).toLocaleString('id-ID')}%` },
+    {
+      key: 'rate',
+      label: 'Tarif',
+      align: 'right',
+      format: (value) => `${Number(value).toLocaleString('id-ID')}%`,
+    },
     { key: 'is_active', label: 'Status', type: 'status' },
   ],
   fields: [
     { key: 'code', label: 'Kode pajak', required: true, minLength: 1, maxLength: 30 },
     { key: 'name', label: 'Nama pajak', required: true, minLength: 2, maxLength: 100 },
     {
-      key: 'tax_type', label: 'Jenis pajak', type: 'select', required: true,
+      key: 'tax_type',
+      label: 'Jenis pajak',
+      type: 'select',
+      required: true,
       options: [
         { label: 'PPN / VAT', value: 'vat' },
         { label: 'Pemotongan / withholding', value: 'withholding' },
         { label: 'Lainnya / non-tax', value: 'other' },
       ],
     },
-    { key: 'rate', label: 'Tarif (%)', type: 'number', required: true, min: 0, max: 100, step: 0.0001 },
-    { key: 'input_tax_account_id', label: 'Akun pajak masukan', type: 'select', nullable: true, valueType: 'number', options: postingAccountOptions },
-    { key: 'output_tax_account_id', label: 'Akun pajak keluaran', type: 'select', nullable: true, valueType: 'number', options: postingAccountOptions },
+    {
+      key: 'rate',
+      label: 'Tarif (%)',
+      type: 'number',
+      required: true,
+      min: 0,
+      max: 100,
+      step: 0.0001,
+    },
+    {
+      key: 'input_tax_account_id',
+      label: 'Akun pajak masukan',
+      type: 'select',
+      nullable: true,
+      valueType: 'number',
+      options: postingAccountOptions,
+    },
+    {
+      key: 'output_tax_account_id',
+      label: 'Akun pajak keluaran',
+      type: 'select',
+      nullable: true,
+      valueType: 'number',
+      options: postingAccountOptions,
+    },
     { key: 'is_active', label: 'Aktif', type: 'checkbox', defaultValue: true },
   ],
 }
@@ -365,7 +497,9 @@ export const projectWorkspaceConfig: MasterWorkspaceConfig = {
   defaultSort: 'code',
   filters: [
     {
-      key: 'status', label: 'Status', options: [
+      key: 'status',
+      label: 'Status',
+      options: [
         { label: 'Direncanakan', value: 'planned' },
         { label: 'Aktif', value: 'active' },
         { label: 'Selesai', value: 'completed' },
@@ -384,16 +518,41 @@ export const projectWorkspaceConfig: MasterWorkspaceConfig = {
   fields: [
     { key: 'code', label: 'Kode proyek', required: true, minLength: 1, maxLength: 30 },
     { key: 'name', label: 'Nama proyek', required: true, minLength: 2, maxLength: 191 },
-    { key: 'customer_id', label: 'Pelanggan', type: 'select', nullable: true, valueType: 'number', options: () => optionsFrom(customerService, (customer) => `${customer.code} — ${customer.name}`, { is_active: true }) },
-    { key: 'status', label: 'Status', type: 'select', required: true, defaultValue: 'planned', options: [
-      { label: 'Direncanakan', value: 'planned' },
-      { label: 'Aktif', value: 'active' },
-      { label: 'Selesai', value: 'completed' },
-      { label: 'Dibatalkan', value: 'cancelled' },
-    ] },
+    {
+      key: 'customer_id',
+      label: 'Pelanggan',
+      type: 'select',
+      nullable: true,
+      valueType: 'number',
+      options: () =>
+        optionsFrom(customerService, (customer) => `${customer.code} — ${customer.name}`, {
+          is_active: true,
+        }),
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      required: true,
+      defaultValue: 'planned',
+      options: [
+        { label: 'Direncanakan', value: 'planned' },
+        { label: 'Aktif', value: 'active' },
+        { label: 'Selesai', value: 'completed' },
+        { label: 'Dibatalkan', value: 'cancelled' },
+      ],
+    },
     { key: 'start_date', label: 'Tanggal mulai', type: 'date', nullable: true },
     { key: 'end_date', label: 'Tanggal selesai', type: 'date', nullable: true },
-    { key: 'budget', label: 'Anggaran', type: 'number', required: true, min: 0, step: 0.01, defaultValue: 0 },
+    {
+      key: 'budget',
+      label: 'Anggaran',
+      type: 'number',
+      required: true,
+      min: 0,
+      step: 0.01,
+      defaultValue: 0,
+    },
     { key: 'description', label: 'Deskripsi', type: 'textarea', nullable: true, span: 2 },
   ],
   validate: (form) =>
@@ -412,7 +571,9 @@ export const itemWorkspaceConfig: MasterWorkspaceConfig = {
   exportFileName: 'barang-dan-jasa.csv',
   filters: [
     {
-      key: 'item_type', label: 'Jenis item', options: [
+      key: 'item_type',
+      label: 'Jenis item',
+      options: [
         { label: 'Persediaan', value: 'inventory' },
         { label: 'Jasa', value: 'service' },
         { label: 'Nonpersediaan', value: 'non_inventory' },
@@ -433,23 +594,96 @@ export const itemWorkspaceConfig: MasterWorkspaceConfig = {
     { key: 'barcode', label: 'Barcode', nullable: true, maxLength: 100 },
     { key: 'name', label: 'Nama item', required: true, minLength: 2, maxLength: 191 },
     {
-      key: 'item_type', label: 'Jenis item', type: 'select', required: true,
+      key: 'item_type',
+      label: 'Jenis item',
+      type: 'select',
+      required: true,
       options: [
         { label: 'Persediaan', value: 'inventory' },
         { label: 'Jasa', value: 'service' },
         { label: 'Nonpersediaan', value: 'non_inventory' },
       ],
     },
-    { key: 'unit_id', label: 'Satuan', type: 'select', required: true, valueType: 'number', options: () => optionsFrom(unitService, (unit) => `${unit.code} — ${unit.name}`, { is_active: true }) },
+    {
+      key: 'unit_id',
+      label: 'Satuan',
+      type: 'select',
+      required: true,
+      valueType: 'number',
+      options: () =>
+        optionsFrom(unitService, (unit) => `${unit.code} — ${unit.name}`, { is_active: true }),
+    },
     { key: 'description', label: 'Deskripsi', type: 'textarea', nullable: true, span: 2 },
-    { key: 'sales_price', label: 'Harga jual', type: 'number', required: true, min: 0, step: 0.01, defaultValue: 0 },
-    { key: 'purchase_price', label: 'Harga beli', type: 'number', required: true, min: 0, step: 0.01, defaultValue: 0 },
-    { key: 'average_cost', label: 'Biaya rata-rata', type: 'number', required: true, min: 0, step: 0.000001, defaultValue: 0, readOnlyOnEdit: true, help: 'Setelah item digunakan, nilai ini diperbarui otomatis oleh costing persediaan.' },
-    { key: 'minimum_stock', label: 'Stok minimum', type: 'number', required: true, min: 0, step: 0.0001, defaultValue: 0 },
-    { key: 'sales_account_id', label: 'Akun penjualan', type: 'select', nullable: true, valueType: 'number', options: postingAccountOptions },
-    { key: 'inventory_account_id', label: 'Akun persediaan', type: 'select', nullable: true, valueType: 'number', options: postingAccountOptions },
-    { key: 'cogs_account_id', label: 'Akun HPP', type: 'select', nullable: true, valueType: 'number', options: postingAccountOptions },
-    { key: 'purchase_account_id', label: 'Akun pembelian/beban', type: 'select', nullable: true, valueType: 'number', options: postingAccountOptions },
+    {
+      key: 'sales_price',
+      label: 'Harga jual',
+      type: 'number',
+      required: true,
+      min: 0,
+      step: 0.01,
+      defaultValue: 0,
+    },
+    {
+      key: 'purchase_price',
+      label: 'Harga beli',
+      type: 'number',
+      required: true,
+      min: 0,
+      step: 0.01,
+      defaultValue: 0,
+    },
+    {
+      key: 'average_cost',
+      label: 'Biaya rata-rata',
+      type: 'number',
+      required: true,
+      min: 0,
+      step: 0.000001,
+      defaultValue: 0,
+      readOnlyOnEdit: true,
+      help: 'Setelah item digunakan, nilai ini diperbarui otomatis oleh costing persediaan.',
+    },
+    {
+      key: 'minimum_stock',
+      label: 'Stok minimum',
+      type: 'number',
+      required: true,
+      min: 0,
+      step: 0.0001,
+      defaultValue: 0,
+    },
+    {
+      key: 'sales_account_id',
+      label: 'Akun penjualan',
+      type: 'select',
+      nullable: true,
+      valueType: 'number',
+      options: postingAccountOptions,
+    },
+    {
+      key: 'inventory_account_id',
+      label: 'Akun persediaan',
+      type: 'select',
+      nullable: true,
+      valueType: 'number',
+      options: postingAccountOptions,
+    },
+    {
+      key: 'cogs_account_id',
+      label: 'Akun HPP',
+      type: 'select',
+      nullable: true,
+      valueType: 'number',
+      options: postingAccountOptions,
+    },
+    {
+      key: 'purchase_account_id',
+      label: 'Akun pembelian/beban',
+      type: 'select',
+      nullable: true,
+      valueType: 'number',
+      options: postingAccountOptions,
+    },
     { key: 'is_active', label: 'Aktif', type: 'checkbox', defaultValue: true },
   ],
 }
@@ -475,11 +709,44 @@ export const bankAccountWorkspaceConfig: MasterWorkspaceConfig = {
   fields: [
     { key: 'code', label: 'Kode rekening', required: true, minLength: 1, maxLength: 30 },
     { key: 'bank_name', label: 'Nama bank', required: true, minLength: 2, maxLength: 150 },
-    { key: 'account_number', label: 'Nomor rekening', required: true, minLength: 2, maxLength: 100 },
-    { key: 'account_name', label: 'Nama pemilik rekening', required: true, minLength: 2, maxLength: 150 },
-    { key: 'currency', label: 'Mata uang', required: true, defaultValue: 'IDR', minLength: 3, maxLength: 3 },
-    { key: 'gl_account_id', label: 'Akun GL', type: 'select', required: true, valueType: 'number', options: postingAccountOptions },
-    { key: 'opening_balance', label: 'Saldo awal', type: 'number', required: true, step: 0.01, defaultValue: 0 },
+    {
+      key: 'account_number',
+      label: 'Nomor rekening',
+      required: true,
+      minLength: 2,
+      maxLength: 100,
+    },
+    {
+      key: 'account_name',
+      label: 'Nama pemilik rekening',
+      required: true,
+      minLength: 2,
+      maxLength: 150,
+    },
+    {
+      key: 'currency',
+      label: 'Mata uang',
+      required: true,
+      defaultValue: 'IDR',
+      minLength: 3,
+      maxLength: 3,
+    },
+    {
+      key: 'gl_account_id',
+      label: 'Akun GL',
+      type: 'select',
+      required: true,
+      valueType: 'number',
+      options: postingAccountOptions,
+    },
+    {
+      key: 'opening_balance',
+      label: 'Saldo awal',
+      type: 'number',
+      required: true,
+      step: 0.01,
+      defaultValue: 0,
+    },
     { key: 'is_active', label: 'Aktif', type: 'checkbox', defaultValue: true },
   ],
 }

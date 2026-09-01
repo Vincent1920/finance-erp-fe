@@ -69,8 +69,7 @@ const canUpdate = computed(() => auth.hasPermission(`${props.config.permissionPr
 const canDelete = computed(
   () =>
     props.config.canDelete !== false &&
-    (auth.hasPermission(`${props.config.permissionPrefix}.deactivate`) ||
-      auth.hasPermission(`${props.config.permissionPrefix}.delete`)),
+    auth.hasPermission(`${props.config.permissionPrefix}.delete`),
 )
 const canExport = computed(() => auth.hasPermission(`${props.config.permissionPrefix}.export`))
 
@@ -135,7 +134,11 @@ const populateForm = (record?: EntityRecord) => {
   clearForm()
   for (const field of props.config.fields) {
     const fallback =
-      field.defaultValue !== undefined ? field.defaultValue : field.type === 'checkbox' ? false : null
+      field.defaultValue !== undefined
+        ? field.defaultValue
+        : field.type === 'checkbox'
+          ? false
+          : null
     const value = record?.[field.key] ?? fallback
     form[field.key] =
       typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
@@ -294,12 +297,15 @@ const formatValue = (column: WorkspaceColumn, row: EntityRecord) => {
   if (value === null || value === undefined || value === '') return '—'
   if (column.type === 'boolean') return Boolean(value) ? 'Aktif' : 'Nonaktif'
   if (column.type === 'currency')
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(Number(value))
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(
+      Number(value),
+    )
   if (column.type === 'number') return new Intl.NumberFormat('id-ID').format(Number(value))
   if (column.type === 'date' || column.type === 'datetime') {
     const date = new Date(String(value))
     if (Number.isNaN(date.valueOf())) return String(value)
-    return new Intl.DateTimeFormat('id-ID',
+    return new Intl.DateTimeFormat(
+      'id-ID',
       column.type === 'datetime'
         ? { dateStyle: 'medium', timeStyle: 'short' }
         : { dateStyle: 'medium' },
@@ -311,7 +317,10 @@ const detailValue = (field: WorkspaceField) => {
   const value = selected.value?.[field.key]
   if (field.type === 'checkbox') return Boolean(value) ? 'Ya' : 'Tidak'
   if (field.type === 'select') {
-    return selectOptions(field).find((option) => String(option.value) === String(value))?.label ?? String(value ?? '—')
+    return (
+      selectOptions(field).find((option) => String(option.value) === String(value))?.label ??
+      String(value ?? '—')
+    )
   }
   if (field.type === 'number' && value !== null && value !== undefined)
     return new Intl.NumberFormat('id-ID').format(Number(value))
@@ -366,10 +375,14 @@ watch(search, () => {
     fetchRows()
   }, 350)
 })
-watch(filterValues, () => {
-  page.value = 1
-  fetchRows()
-}, { deep: true })
+watch(
+  filterValues,
+  () => {
+    page.value = 1
+    fetchRows()
+  },
+  { deep: true },
+)
 watch(perPage, () => {
   page.value = 1
   fetchRows()
@@ -409,7 +422,11 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
       <div class="flex flex-wrap gap-3 border-b p-4">
         <label class="relative min-w-56 flex-1">
           <Search class="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <input v-model="search" class="field pl-9" :placeholder="`Cari ${config.singular.toLowerCase()}...`" />
+          <input
+            v-model="search"
+            class="field pl-9"
+            :placeholder="`Cari ${config.singular.toLowerCase()}...`"
+          />
         </label>
         <select
           v-for="filter in config.filters"
@@ -433,7 +450,10 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
         </AppButton>
       </div>
 
-      <div v-if="listError" class="m-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+      <div
+        v-if="listError"
+        class="m-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-red-50 p-4 text-sm text-red-700"
+      >
         <span>{{ listError }}</span>
         <AppButton variant="secondary" @click="fetchRows">Coba lagi</AppButton>
       </div>
@@ -442,7 +462,12 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
         <table class="w-full min-w-[760px] text-left text-sm">
           <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th v-for="column in config.columns" :key="column.key" class="px-4 py-3" :class="column.align === 'right' && 'text-right'">
+              <th
+                v-for="column in config.columns"
+                :key="column.key"
+                class="px-4 py-3"
+                :class="column.align === 'right' && 'text-right'"
+              >
                 <button
                   v-if="column.sortable"
                   type="button"
@@ -472,22 +497,49 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
                 class="px-4 py-3"
                 :class="column.align === 'right' && 'text-right tabular-nums'"
               >
-                <AppBadge v-if="column.type === 'status' || column.type === 'boolean'" :tone="statusTone(row[column.key])">
+                <AppBadge
+                  v-if="column.type === 'status' || column.type === 'boolean'"
+                  :tone="statusTone(row[column.key])"
+                >
                   {{ statusLabel(row[column.key]) }}
                 </AppBadge>
-                <span v-else :class="column.key === 'code' || column.key === 'sku' ? 'font-mono font-semibold text-blue-700' : ''">
+                <span
+                  v-else
+                  :class="
+                    column.key === 'code' || column.key === 'sku'
+                      ? 'font-mono font-semibold text-blue-700'
+                      : ''
+                  "
+                >
                   {{ formatValue(column, row) }}
                 </span>
               </td>
               <td class="px-4 py-3">
                 <div class="flex justify-end gap-1">
-                  <button type="button" class="rounded p-2 text-slate-500 hover:bg-slate-100" title="Lihat detail" @click="openRecord(row, 'detail')">
+                  <button
+                    type="button"
+                    class="rounded p-2 text-slate-500 hover:bg-slate-100"
+                    title="Lihat detail"
+                    @click="openRecord(row, 'detail')"
+                  >
                     <Eye class="h-4 w-4" />
                   </button>
-                  <button v-if="canUpdate" type="button" class="rounded p-2 text-slate-500 hover:bg-blue-50 hover:text-blue-600" title="Edit" @click="openRecord(row, 'edit')">
+                  <button
+                    v-if="canUpdate"
+                    type="button"
+                    class="rounded p-2 text-slate-500 hover:bg-blue-50 hover:text-blue-600"
+                    title="Edit"
+                    @click="openRecord(row, 'edit')"
+                  >
                     <Pencil class="h-4 w-4" />
                   </button>
-                  <button v-if="canDelete" type="button" class="rounded p-2 text-slate-500 hover:bg-red-50 hover:text-red-600" :title="config.deleteLabel ?? 'Nonaktifkan'" @click="pendingDelete = row">
+                  <button
+                    v-if="canDelete"
+                    type="button"
+                    class="rounded p-2 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                    :title="config.deleteLabel ?? 'Nonaktifkan'"
+                    @click="pendingDelete = row"
+                  >
                     <Trash2 class="h-4 w-4" />
                   </button>
                 </div>
@@ -496,9 +548,21 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
           </tbody>
         </table>
       </div>
-      <AppEmptyState v-if="!isLoading && !rows.length && !listError" :title="`Belum ada ${config.title.toLowerCase()}`" description="Gunakan tombol tambah untuk membuat data pertama atau ubah filter pencarian." />
+      <AppEmptyState
+        v-if="!isLoading && !rows.length && !listError"
+        :title="`Belum ada ${config.title.toLowerCase()}`"
+        description="Gunakan tombol tambah untuk membuat data pertama atau ubah filter pencarian."
+      />
       <div class="border-t p-4">
-        <AppPagination :page="page" :total="total" :per-page="perPage" @change="page = $event; fetchRows()" />
+        <AppPagination
+          :page="page"
+          :total="total"
+          :per-page="perPage"
+          @change="
+            page = $event
+            fetchRows()
+          "
+        />
       </div>
     </section>
 
@@ -513,14 +577,32 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
         <div v-for="index in 4" :key="index" class="h-10 animate-pulse rounded bg-slate-100" />
       </div>
       <dl v-else-if="modalMode === 'detail'" class="grid gap-4 sm:grid-cols-2">
-        <div v-for="field in config.fields" :key="field.key" :class="field.span === 2 && 'sm:col-span-2'">
-          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ field.label }}</dt>
+        <div
+          v-for="field in config.fields"
+          :key="field.key"
+          :class="field.span === 2 && 'sm:col-span-2'"
+        >
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            {{ field.label }}
+          </dt>
           <dd class="mt-1 whitespace-pre-wrap text-sm text-slate-800">{{ detailValue(field) }}</dd>
         </div>
       </dl>
-      <form v-else-if="modalMode" id="master-data-form" class="grid gap-4 sm:grid-cols-2" @submit.prevent="save">
-        <div v-for="field in config.fields" :key="field.key" :class="field.span === 2 && 'sm:col-span-2'">
-          <label v-if="field.type === 'checkbox'" class="flex items-start gap-3 rounded-lg border p-3 text-sm">
+      <form
+        v-else-if="modalMode"
+        id="master-data-form"
+        class="grid gap-4 sm:grid-cols-2"
+        @submit.prevent="save"
+      >
+        <div
+          v-for="field in config.fields"
+          :key="field.key"
+          :class="field.span === 2 && 'sm:col-span-2'"
+        >
+          <label
+            v-if="field.type === 'checkbox'"
+            class="flex items-start gap-3 rounded-lg border p-3 text-sm"
+          >
             <input
               type="checkbox"
               class="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600"
@@ -534,7 +616,8 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
           </label>
           <label v-else-if="field.type === 'textarea'" class="block text-sm">
             <span class="mb-1.5 block font-medium text-slate-700">
-              {{ field.label }} <b v-if="field.required" class="text-red-500">*</b>
+              {{ field.label }}
+              <b v-if="field.required" class="text-red-500">*</b>
             </span>
             <textarea
               :value="inputValue(field.key)"
@@ -544,7 +627,9 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
               :placeholder="field.placeholder"
               @input="form[field.key] = ($event.target as HTMLTextAreaElement).value"
             />
-            <span v-if="fieldErrors[field.key]" class="mt-1 block text-xs text-red-600">{{ fieldErrors[field.key] }}</span>
+            <span v-if="fieldErrors[field.key]" class="mt-1 block text-xs text-red-600">
+              {{ fieldErrors[field.key] }}
+            </span>
           </label>
           <AppSelect
             v-else-if="field.type === 'select'"
@@ -571,13 +656,28 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
             :disabled="modalMode === 'edit' && field.readOnlyOnEdit"
             @update:model-value="form[field.key] = $event"
           />
-          <p v-if="field.help && field.type !== 'checkbox'" class="mt-1 text-xs text-slate-400">{{ field.help }}</p>
+          <p v-if="field.help && field.type !== 'checkbox'" class="mt-1 text-xs text-slate-400">
+            {{ field.help }}
+          </p>
         </div>
       </form>
       <template #footer>
         <AppButton variant="secondary" :disabled="isSaving" @click="closeModal">Tutup</AppButton>
-        <AppButton v-if="modalMode === 'detail' && canUpdate" :icon="Pencil" @click="modalMode = 'edit'">Edit</AppButton>
-        <AppButton v-else-if="modalMode !== 'detail'" type="submit" form="master-data-form" :loading="isSaving">Simpan</AppButton>
+        <AppButton
+          v-if="modalMode === 'detail' && canUpdate"
+          :icon="Pencil"
+          @click="modalMode = 'edit'"
+        >
+          Edit
+        </AppButton>
+        <AppButton
+          v-else-if="modalMode !== 'detail'"
+          type="submit"
+          form="master-data-form"
+          :loading="isSaving"
+        >
+          Simpan
+        </AppButton>
       </template>
     </AppModal>
 

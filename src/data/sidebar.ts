@@ -33,11 +33,7 @@ type MenuDefinition = [
   permissions?: readonly string[],
 ]
 
-const createMenuGroup = (
-  label: string,
-  icon: Component,
-  items: MenuDefinition[],
-): MenuItem => ({
+const createMenuGroup = (label: string, icon: Component, items: MenuDefinition[]): MenuItem => ({
   label,
   icon,
   children: items.map(([itemLabel, path, permission, permissions]) => ({
@@ -89,7 +85,7 @@ export const menu: MenuItem[] = [
     ['Neraca Saldo', '/accounting/trial-balance', 'accounting.view'],
   ]),
   createMenuGroup('Perbankan', Banknote, [
-    ['Rekening Bank', '/banking/accounts', 'banking.view'],
+    ['Rekening Bank', '/banking/accounts', 'bank-accounts.view'],
     ['Mutasi Bank', '/banking/statements', 'banking.view'],
     ['Rekonsiliasi', '/banking/reconciliation', 'banking.view'],
     ['Buku Kas', '/banking/cash-book', 'banking.view'],
