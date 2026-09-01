@@ -75,5 +75,10 @@ export const purchaseRoutes: RouteRecordRaw[] = [
     },
   },
   createModuleRoute('/purchases/returns', 'Retur Pembelian'),
-  createModuleRoute('/purchases/payables', 'Utang Usaha'),
+  {
+    path: '/purchases/payables',
+    name: 'purchase-payables',
+    component: () => import('@/views/purchases/payables/PayableAgingView.vue'),
+    meta: { title: 'Utang Usaha', requiresAuth: true, permission: 'purchase-invoices.view' },
+  },
 ]

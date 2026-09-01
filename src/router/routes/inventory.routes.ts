@@ -11,5 +11,10 @@ export const inventoryRoutes: RouteRecordRaw[] = [
   },
   createModuleRoute('/inventory/transfers', 'Transfer Stok'),
   createModuleRoute('/inventory/adjustments', 'Penyesuaian Stok'),
-  createModuleRoute('/inventory/reports', 'Laporan Persediaan'),
+  {
+    path: '/inventory/reports',
+    name: 'inventory-reports',
+    component: () => import('@/views/inventory/StockOverviewView.vue'),
+    meta: { title: 'Laporan Persediaan', requiresAuth: true, permission: 'inventory.view' },
+  },
 ]

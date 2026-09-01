@@ -1,8 +1,23 @@
 import { createModuleRoute } from './createModuleRoute'
 
 export const reportRoutes = [
-  createModuleRoute('/reports/receivable-aging', 'Umur Piutang'),
-  createModuleRoute('/reports/payable-aging', 'Umur Utang'),
-  createModuleRoute('/reports/inventory', 'Laporan Persediaan'),
+  {
+    path: '/reports/receivable-aging',
+    name: 'report-receivable-aging',
+    component: () => import('@/views/sales/receivables/ReceivableView.vue'),
+    meta: { title: 'Umur Piutang', requiresAuth: true, permission: 'sales-invoices.view' },
+  },
+  {
+    path: '/reports/payable-aging',
+    name: 'report-payable-aging',
+    component: () => import('@/views/purchases/payables/PayableAgingView.vue'),
+    meta: { title: 'Umur Utang', requiresAuth: true, permission: 'purchase-invoices.view' },
+  },
+  {
+    path: '/reports/inventory',
+    name: 'report-inventory',
+    component: () => import('@/views/inventory/StockOverviewView.vue'),
+    meta: { title: 'Laporan Persediaan', requiresAuth: true, permission: 'inventory.view' },
+  },
   createModuleRoute('/reports/subledger', 'Rekonsiliasi Subledger', true),
 ]
