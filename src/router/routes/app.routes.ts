@@ -36,13 +36,13 @@ export const appRoutes: RouteRecordRaw = {
       path: 'transactions',
       name: 'transactions',
       component: () => import('@/views/transactions/TransactionBrowserView.vue'),
-      meta: protectedMeta('Browser Transaksi', 'transactions.view'),
+      meta: protectedMeta('Browser Transaksi', 'transaction-browser.view'),
     },
     {
       path: 'search',
       name: 'search',
       component: () => import('@/views/search/GlobalSearchView.vue'),
-      meta: protectedMeta('Pencarian Global'),
+      meta: protectedMeta('Pencarian Global', 'global-search.view'),
     },
     {
       path: 'reports/profit-loss',
