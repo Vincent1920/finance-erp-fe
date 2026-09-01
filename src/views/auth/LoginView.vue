@@ -5,6 +5,7 @@ import { Landmark } from 'lucide-vue-next'
 
 import AppInput from '@/components/common/AppInput.vue'
 import AppButton from '@/components/common/AppButton.vue'
+import ThemeSelector from '@/components/common/ThemeSelector.vue'
 
 import { useAuthStore } from '@/stores/auth.store'
 import { useNotificationStore } from '@/stores/notification.store'
@@ -114,8 +115,11 @@ const handleLogin = async () => {
 
 <template>
   <main
-    class="grid min-h-screen place-items-center bg-slate-100 p-4"
+    class="relative grid min-h-screen place-items-center bg-slate-100 p-4"
   >
+    <div class="absolute right-4 top-4">
+      <ThemeSelector />
+    </div>
     <form
       class="panel w-full max-w-md p-7"
       novalidate

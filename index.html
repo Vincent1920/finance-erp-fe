@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#1e40af" />
     <title>Finora ERP</title>
+    <script>
+      ;(() => {
+        const themes = ['light', 'dark', 'midnight']
+        const saved = localStorage.getItem('finora-theme')
+        const theme = themes.includes(saved)
+          ? saved
+          : matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light'
+        document.documentElement.classList.add(theme)
+        document.documentElement.style.colorScheme = theme === 'light' ? 'light' : 'dark'
+      })()
+    </script>
   </head>
   <body>
     <div id="app"></div>

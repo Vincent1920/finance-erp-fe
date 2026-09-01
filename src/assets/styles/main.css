@@ -1,7 +1,69 @@
 @import './tailwind.css';
+
+:root,
+.light {
+  --bg-primary: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-sidebar: #ffffff;
+  --bg-card: #ffffff;
+  --bg-elevated: #f8fafc;
+  --bg-hover: #f1f5f9;
+  --bg-selected: #eff6ff;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --focus-ring: #dbeafe;
+  --overlay: rgb(2 6 23 / 0.42);
+  --scrollbar: #cbd5e1;
+}
+
+.dark {
+  --bg-primary: #111827;
+  --bg-surface: #1f2937;
+  --bg-sidebar: #172033;
+  --bg-card: #1f2937;
+  --bg-elevated: #263244;
+  --bg-hover: #2b3749;
+  --bg-selected: #1e3a5f;
+  --text-primary: #f8fafc;
+  --text-secondary: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border-color: #374151;
+  --border-strong: #4b5563;
+  --focus-ring: rgb(59 130 246 / 0.28);
+  --overlay: rgb(2 6 23 / 0.68);
+  --scrollbar: #475569;
+}
+
+.midnight {
+  --bg-primary: #05070b;
+  --bg-surface: #0d1117;
+  --bg-sidebar: #080c12;
+  --bg-card: #10151d;
+  --bg-elevated: #151b25;
+  --bg-hover: #18202c;
+  --bg-selected: #10294a;
+  --text-primary: #f8fafc;
+  --text-secondary: #e4e4e7;
+  --text-muted: #a1a1aa;
+  --border-color: #202936;
+  --border-strong: #334155;
+  --focus-ring: rgb(59 130 246 / 0.35);
+  --overlay: rgb(0 0 0 / 0.78);
+  --scrollbar: #334155;
+}
+
 @layer base {
+  html {
+    background: var(--bg-primary);
+  }
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply antialiased;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 160ms ease, color 160ms ease;
   }
   button,
   input,
@@ -12,13 +74,90 @@
 }
 @layer components {
   .panel {
-    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+    @apply rounded-xl border shadow-sm;
+    background: var(--bg-card);
+    border-color: var(--border-color);
   }
   .field {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100;
+    @apply w-full rounded-lg border px-3 py-2 text-sm transition focus:border-blue-500 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60;
+    background: var(--bg-surface);
+    border-color: var(--border-strong);
+    color: var(--text-primary);
+  }
+  .field:focus {
+    --tw-ring-color: var(--focus-ring);
   }
 }
+
+/* Map the existing neutral design utilities to the active theme tokens. */
+html:not(.light) .bg-white,
+html:not(.light) .bg-white\/95 { background-color: var(--bg-surface) !important; }
+html:not(.light) .bg-slate-50,
+html:not(.light) .bg-slate-100 { background-color: var(--bg-elevated) !important; }
+html:not(.light) .hover\:bg-slate-50:hover,
+html:not(.light) .hover\:bg-slate-100:hover { background-color: var(--bg-hover) !important; }
+html:not(.light) .bg-blue-50 { background-color: var(--bg-selected) !important; }
+html:not(.light) .border-slate-100,
+html:not(.light) .border-slate-200,
+html:not(.light) .border-slate-300,
+html:not(.light) .border-t,
+html:not(.light) .border-b,
+html:not(.light) .border-l,
+html:not(.light) .border-r { border-color: var(--border-color) !important; }
+html:not(.light) .text-slate-900,
+html:not(.light) .text-slate-800,
+html:not(.light) .text-slate-700 { color: var(--text-primary) !important; }
+html:not(.light) .text-slate-600,
+html:not(.light) .text-slate-500,
+html:not(.light) .text-slate-400 { color: var(--text-muted) !important; }
+html:not(.light) input,
+html:not(.light) select,
+html:not(.light) textarea { color: var(--text-primary); }
+html:not(.light) input::placeholder,
+html:not(.light) textarea::placeholder { color: var(--text-muted); opacity: 0.8; }
+html:not(.light) option { background: var(--bg-surface); color: var(--text-primary); }
+html:not(.light) tbody tr:hover { background-color: var(--bg-hover); }
+html:not(.light) .bg-slate-950\/40 { background-color: var(--overlay) !important; }
+
+.theme-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+}
+.theme-selector__label { font-size: 0.75rem; font-weight: 600; }
+.theme-selector__options {
+  display: flex;
+  gap: 0.125rem;
+  padding: 0.2rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.65rem;
+  background: var(--bg-elevated);
+}
+.theme-selector__button {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: 140ms ease;
+}
+.theme-selector__button:hover { background: var(--bg-hover); color: var(--text-primary); }
+.theme-selector__button:focus-visible { box-shadow: 0 0 0 3px var(--focus-ring); }
+.theme-selector__button--active {
+  background: var(--bg-surface);
+  color: #3b82f6;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.16);
+}
+
+html.dark aside { background: var(--bg-sidebar) !important; }
+html.midnight aside { background: var(--bg-sidebar) !important; }
+html.midnight .panel { background: var(--bg-card); }
+
 * {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-color: var(--scrollbar) transparent;
 }

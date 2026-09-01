@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Bell, ChevronDown, LogOut, Menu, Search, Settings } from 'lucide-vue-next'
 import AppConfirmDialog from '@/components/common/AppConfirmDialog.vue'
+import ThemeSelector from '@/components/common/ThemeSelector.vue'
 import { periodService } from '@/services/period.service'
 import { useAuthStore } from '@/stores/auth.store'
 import { useNotificationStore } from '@/stores/notification.store'
@@ -95,6 +96,8 @@ onMounted(loadActivePeriod)
       <p class="text-xs text-slate-400">Periode aktif</p>
       <p class="text-sm font-semibold">{{ activePeriod }}</p>
     </div>
+
+    <ThemeSelector compact />
 
     <button
       v-if="auth.hasPermission('approvals.view')"
