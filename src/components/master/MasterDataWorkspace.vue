@@ -104,6 +104,11 @@ const fetchRows = async () => {
   }
 }
 
+const handlePageChange = (nextPage: number) => {
+  page.value = nextPage
+  void fetchRows()
+}
+
 const loadOptions = async () => {
   await Promise.all(
     props.config.fields.map(async (field) => {
@@ -554,15 +559,7 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
         description="Gunakan tombol tambah untuk membuat data pertama atau ubah filter pencarian."
       />
       <div class="border-t p-4">
-        <AppPagination
-          :page="page"
-          :total="total"
-          :per-page="perPage"
-          @change="
-            page = $event
-            fetchRows()
-          "
-        />
+        <AppPagination :page="page" :total="total" :per-page="perPage" @change="handlePageChange" />
       </div>
     </section>
 
