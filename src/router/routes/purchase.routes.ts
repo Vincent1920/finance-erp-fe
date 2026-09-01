@@ -38,7 +38,42 @@ export const purchaseRoutes: RouteRecordRaw[] = [
       permission: 'purchase-orders.view',
     },
   },
-  createModuleRoute('/purchases/invoices', 'Purchase Invoice'),
+  {
+    path: '/purchases/invoices',
+    name: 'purchase-invoices',
+    component: () => import('@/views/purchases/invoices/PurchaseInvoiceListView.vue'),
+    meta: { title: 'Purchase Invoice', requiresAuth: true, permission: 'purchase-invoices.view' },
+  },
+  {
+    path: '/purchases/invoices/new',
+    name: 'purchase-invoices-new',
+    component: () => import('@/views/purchases/invoices/PurchaseInvoiceFormView.vue'),
+    meta: {
+      title: 'Buat Purchase Invoice',
+      requiresAuth: true,
+      permission: 'purchase-invoices.create',
+    },
+  },
+  {
+    path: '/purchases/invoices/:id/edit',
+    name: 'purchase-invoices-edit',
+    component: () => import('@/views/purchases/invoices/PurchaseInvoiceFormView.vue'),
+    meta: {
+      title: 'Edit Purchase Invoice',
+      requiresAuth: true,
+      permission: 'purchase-invoices.update',
+    },
+  },
+  {
+    path: '/purchases/invoices/:id',
+    name: 'purchase-invoices-detail',
+    component: () => import('@/views/purchases/invoices/PurchaseInvoiceDetailView.vue'),
+    meta: {
+      title: 'Detail Purchase Invoice',
+      requiresAuth: true,
+      permission: 'purchase-invoices.view',
+    },
+  },
   createModuleRoute('/purchases/returns', 'Retur Pembelian'),
   createModuleRoute('/purchases/payables', 'Utang Usaha'),
 ]

@@ -67,7 +67,7 @@ export const menu: MenuItem[] = [
   ]),
   createMenuGroup('Pembelian', PackageCheck, [
     ['Purchase Order', '/purchases/orders', 'purchase-orders.view'],
-    ['Purchase Invoice', '/purchases/invoices', 'purchases.view'],
+    ['Purchase Invoice', '/purchases/invoices', 'purchase-invoices.view'],
     ['Retur Pembelian', '/purchases/returns', 'purchases.view'],
     ['Utang', '/purchases/payables', 'purchases.view'],
   ]),
