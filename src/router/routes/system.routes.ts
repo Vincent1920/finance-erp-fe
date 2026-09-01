@@ -22,8 +22,26 @@ export const systemRoutes = [
     component: () => import('@/views/system/roles/RoleManagementView.vue'),
     meta: { title: 'Peran & Hak Akses', requiresAuth: true, permission: 'roles.view' },
   },
-  createModuleRoute('/system/audit-logs', 'Audit Log'),
-  createModuleRoute('/system/error-logs', 'Error Log', true),
+  {
+    path: '/system/audit-logs',
+    component: () => import('@/views/system/logs/SystemLogView.vue'),
+    meta: {
+      title: 'Audit Log',
+      requiresAuth: true,
+      permission: 'audit-logs.view',
+      logType: 'audit',
+    },
+  },
+  {
+    path: '/system/error-logs',
+    component: () => import('@/views/system/logs/SystemLogView.vue'),
+    meta: {
+      title: 'Error Log',
+      requiresAuth: true,
+      permission: 'error-logs.view',
+      logType: 'error',
+    },
+  },
   createModuleRoute('/system/backup', 'Backup & Restore', true),
   {
     path: '/system/settings',
