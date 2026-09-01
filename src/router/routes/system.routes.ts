@@ -12,8 +12,16 @@ export const systemRoutes = [
       permissions: IMPORT_PERMISSIONS,
     },
   },
-  createModuleRoute('/system/users', 'Pengguna'),
-  createModuleRoute('/system/roles', 'Peran & Hak Akses'),
+  {
+    path: '/system/users',
+    component: () => import('@/views/system/users/UserManagementView.vue'),
+    meta: { title: 'Pengguna', requiresAuth: true, permission: 'users.view' },
+  },
+  {
+    path: '/system/roles',
+    component: () => import('@/views/system/roles/RoleManagementView.vue'),
+    meta: { title: 'Peran & Hak Akses', requiresAuth: true, permission: 'roles.view' },
+  },
   createModuleRoute('/system/audit-logs', 'Audit Log'),
   createModuleRoute('/system/error-logs', 'Error Log', true),
   createModuleRoute('/system/backup', 'Backup & Restore', true),
