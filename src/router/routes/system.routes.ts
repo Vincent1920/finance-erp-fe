@@ -25,5 +25,10 @@ export const systemRoutes = [
   createModuleRoute('/system/audit-logs', 'Audit Log'),
   createModuleRoute('/system/error-logs', 'Error Log', true),
   createModuleRoute('/system/backup', 'Backup & Restore', true),
-  createModuleRoute('/system/settings', 'Pengaturan'),
+  {
+    path: '/system/settings',
+    name: 'system-settings',
+    component: () => import('@/views/system/settings/SettingsView.vue'),
+    meta: { title: 'Pengaturan', requiresAuth: true, permission: 'settings.view' },
+  },
 ]
