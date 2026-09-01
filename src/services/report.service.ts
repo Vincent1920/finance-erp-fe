@@ -1,5 +1,5 @@
 import api from './api/client'
-import type { ApiResponse } from '@/types/api'
+import type { ApiResponse, PaginatedResponse } from '@/types/api'
 
 export interface ReportAccountLine {
   accountId: number
@@ -71,6 +71,58 @@ export interface AgingReport {
   total: string | number
 }
 
+export interface LedgerRow {
+  id: number
+  account_code: string
+  account_name: string
+  journal_number: string
+  journal_date: string
+  reference: string | null
+  description: string
+  debit: string | number
+  credit: string | number
+  running_balance: string | number
+}
+export interface TrialBalanceReport {
+  accounts: Array<{
+    id: number
+    code: string
+    name: string
+    openingDebit: string
+    openingCredit: string
+    periodDebit: string
+    periodCredit: string
+    endingDebit: string
+    endingCredit: string
+  }>
+  totals: {
+    openingDebit: string
+    openingCredit: string
+    periodDebit: string
+    periodCredit: string
+    endingDebit: string
+    endingCredit: string
+  }
+  balanced: boolean
+  difference: string
+}
+export interface ReconciliationRow {
+  type: string
+  subledger: string | number
+  generalLedger: string | number
+  difference: string | number
+  balanced: boolean
+}
+export interface BudgetActualRow {
+  account_id: number
+  account_code: string
+  account_name: string
+  budget: string | number
+  actual: string | number
+  variance: string | number
+  variance_percentage: string | number | null
+}
+
 export const reportService = {
   profitLoss: async (dateFrom: string, dateTo: string) =>
     (
@@ -94,6 +146,30 @@ export const reportService = {
     (
       await api.get<ApiResponse<AgingReport>>('/reports/payable-aging', {
         params: { as_of_date: asOfDate },
+      })
+    ).data.data,
+  generalLedger: async (dateFrom: string, dateTo: string) =>
+    (
+      await api.get<PaginatedResponse<LedgerRow>>('/reports/general-ledger', {
+        params: { date_from: dateFrom, date_to: dateTo, limit: 100 },
+      })
+    ).data,
+  trialBalance: async (dateFrom: string, dateTo: string) =>
+    (
+      await api.get<ApiResponse<TrialBalanceReport>>('/reports/trial-balance', {
+        params: { date_from: dateFrom, date_to: dateTo },
+      })
+    ).data.data,
+  subledger: async (asOfDate: string) =>
+    (
+      await api.get<ApiResponse<ReconciliationRow[]>>('/reports/subledger-reconciliation', {
+        params: { as_of_date: asOfDate },
+      })
+    ).data.data,
+  budgetVsActual: async (dateFrom: string, dateTo: string) =>
+    (
+      await api.get<ApiResponse<BudgetActualRow[]>>('/reports/budget-vs-actual', {
+        params: { date_from: dateFrom, date_to: dateTo },
       })
     ).data.data,
 }

@@ -19,5 +19,14 @@ export const reportRoutes = [
     component: () => import('@/views/inventory/StockOverviewView.vue'),
     meta: { title: 'Laporan Persediaan', requiresAuth: true, permission: 'inventory.view' },
   },
-  createModuleRoute('/reports/subledger', 'Rekonsiliasi Subledger', true),
+  {
+    path: '/reports/subledger',
+    component: () => import('@/views/reports/OperationalReportView.vue'),
+    meta: {
+      title: 'Rekonsiliasi Subledger',
+      requiresAuth: true,
+      permission: 'reports.view',
+      report: 'subledger',
+    },
+  },
 ]

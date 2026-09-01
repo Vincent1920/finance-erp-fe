@@ -22,8 +22,26 @@ export const accountingRoutes = [
     meta: { title: 'Detail Jurnal', requiresAuth: true, permission: 'accounting.view' },
   },
   createModuleRoute('/accounting/recurring-journals', 'Jurnal Berulang', true),
-  createModuleRoute('/accounting/general-ledger', 'Buku Besar'),
-  createModuleRoute('/accounting/trial-balance', 'Neraca Saldo'),
+  {
+    path: '/accounting/general-ledger',
+    component: () => import('@/views/reports/OperationalReportView.vue'),
+    meta: {
+      title: 'Buku Besar',
+      requiresAuth: true,
+      permission: 'reports.view',
+      report: 'general-ledger',
+    },
+  },
+  {
+    path: '/accounting/trial-balance',
+    component: () => import('@/views/reports/OperationalReportView.vue'),
+    meta: {
+      title: 'Neraca Saldo',
+      requiresAuth: true,
+      permission: 'reports.view',
+      report: 'trial-balance',
+    },
+  },
   createModuleRoute('/accounting/closing', 'Tutup Periode'),
   createModuleRoute('/accounting/year-end', 'Tutup Tahun', true),
 ]

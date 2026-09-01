@@ -14,7 +14,16 @@ const supportingModuleRoutes = [
   createModuleRoute('/assets/fixed-assets', 'Aset Tetap'),
   createModuleRoute('/assets/depreciation', 'Penyusutan Aset'),
   createModuleRoute('/budgeting/budgets', 'Anggaran'),
-  createModuleRoute('/budgeting/budget-vs-actual', 'Anggaran vs Aktual'),
+  {
+    path: '/budgeting/budget-vs-actual',
+    component: () => import('@/views/reports/OperationalReportView.vue'),
+    meta: {
+      title: 'Anggaran vs Aktual',
+      requiresAuth: true,
+      permission: 'reports.view',
+      report: 'budget-vs-actual',
+    },
+  },
   createModuleRoute('/approvals', 'Persetujuan Transaksi'),
 ]
 
