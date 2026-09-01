@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Finora ERP">
+  <defs>
+    <linearGradient id="bg" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="#07152f"/>
+  <path d="M17 14h31v9H27v8h18v9H27v15H17V14Z" fill="url(#bg)"/>
+  <circle cx="48" cy="50" r="5" fill="#34d399"/>
+</svg>
