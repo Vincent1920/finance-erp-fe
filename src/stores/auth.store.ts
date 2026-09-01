@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
+import axios from 'axios'
 
 import {
   authService,
@@ -19,6 +20,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoading = ref(false)
   const isInitialized = ref(false)
+  const isRestoring = ref(false)
+  const restoreError = ref('')
   const errorMessage = ref('')
 
   let bootstrapRequest: Promise<void> | null = null
@@ -102,6 +105,8 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     bootstrapRequest = (async () => {
+      isRestoring.value = true
+      restoreError.value = ''
       const storedToken = getStoredToken()
 
       if (!storedToken) {
@@ -116,12 +121,18 @@ export const useAuthStore = defineStore('auth', () => {
       try {
         // Restore user + roles + permissions setelah browser refresh.
         user.value = await authService.me()
-      } catch {
-        removeStoredToken()
-
-        token.value = null
-        user.value = null
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          removeStoredToken()
+          token.value = null
+          user.value = null
+        } else {
+          restoreError.value = axios.isAxiosError(error) && !error.response
+            ? 'Tidak dapat menghubungi server. Sesi tersimpan dan akan dicoba kembali.'
+            : 'Sesi belum dapat diverifikasi. Silakan coba lagi.'
+        }
       } finally {
+        isRestoring.value = false
         isInitialized.value = true
       }
     })()
@@ -155,6 +166,8 @@ export const useAuthStore = defineStore('auth', () => {
 
     isLoading,
     isInitialized,
+    isRestoring,
+    restoreError,
     isAuthenticated,
     isSuperAdmin,
     errorMessage,

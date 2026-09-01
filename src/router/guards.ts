@@ -13,6 +13,12 @@ export function registerRouterGuards(
     const requiresAuth =
       to.meta.requiresAuth !== false
 
+    // Restore sebelum mengevaluasi route publik/private agar refresh tidak
+    // memakai state Pinia kosong. Network error mempertahankan token.
+    if (!authStore.isInitialized) {
+      await authStore.bootstrap()
+    }
+
     // Route publik, termasuk /login.
     if (!requiresAuth) {
       if (
@@ -23,12 +29,6 @@ export function registerRouterGuards(
       }
 
       return true
-    }
-
-    // Restore session hanya diperlukan untuk route private. Route publik
-    // (khususnya /login) tetap dapat dirender ketika API sedang offline.
-    if (!authStore.isInitialized) {
-      await authStore.bootstrap()
     }
 
     // Route private tetapi token tidak ada.

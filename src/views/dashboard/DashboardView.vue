@@ -85,7 +85,7 @@ onMounted(load)
         </p>
       </div>
       <button class="text-sm font-semibold text-blue-700" :disabled="loading" @click="load">
-        Muat ulang
+        {{ error ? 'Coba lagi' : 'Muat ulang' }}
       </button>
     </header>
     <p v-if="error" class="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
