@@ -109,7 +109,7 @@ export const menu: MenuItem[] = [
   ]),
   createMenuGroup('Workflow', Workflow, [
     ['Persetujuan Transaksi', '/approvals', 'approvals.view'],
-    ['Browser Transaksi', '/transactions', 'transactions.view'],
+    ['Browser Transaksi', '/transactions', 'transaction-browser.view'],
   ]),
   createMenuGroup('Penutupan', CalendarCheck, [
     ['Tutup Periode', '/accounting/closing', 'accounting.close_period'],
