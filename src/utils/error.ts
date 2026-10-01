@@ -84,7 +84,20 @@ export function getApiErrorMessage(
 ) {
   if (!axios.isAxiosError<ApiErrorResponse>(error))
     return error instanceof Error ? error.message : fallback
-  return error.response?.data?.message || fallback
+  const data = error.response?.data
+  if (data?.message === 'Validation failed' && data.errors) {
+    const errors = data.errors as Record<string, unknown>
+    const fieldErrors = errors.fieldErrors && typeof errors.fieldErrors === 'object'
+      ? errors.fieldErrors as Record<string, unknown>
+      : errors
+    const detail = Object.entries(fieldErrors)
+      .flatMap(([field, messages]) => Array.isArray(messages)
+        ? messages.map((message) => `${field}: ${String(message)}`)
+        : [])
+      .join(' · ')
+    if (detail) return detail
+  }
+  return data?.message || fallback
 }
 export function getValidationErrors(error: unknown): Record<string, string[]> {
   if (!axios.isAxiosError<ApiErrorResponse>(error)) return {}

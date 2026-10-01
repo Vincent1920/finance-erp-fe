@@ -1,4 +1,3 @@
-import { createModuleRoute } from './createModuleRoute'
 import { IMPORT_PERMISSIONS } from '@/data/import-types'
 
 export const systemRoutes = [
@@ -42,7 +41,11 @@ export const systemRoutes = [
       logType: 'error',
     },
   },
-  createModuleRoute('/system/backup', 'Backup & Restore', true),
+  {
+    path: '/system/backup',
+    component: () => import('@/views/system/settings/SettingsView.vue'),
+    meta: { title: 'Backup & Restore', requiresAuth: true, permission: 'backups.view' },
+  },
   {
     path: '/system/settings',
     name: 'system-settings',

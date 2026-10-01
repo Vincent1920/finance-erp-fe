@@ -3,12 +3,27 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ChevronRight, Home } from 'lucide-vue-next'
 const route = useRoute()
+const labels: Record<string, string> = {
+  reports: 'Laporan',
+  'profit-loss': 'Laba Rugi',
+  'balance-sheet': 'Neraca',
+  'cash-flow': 'Arus Kas',
+  system: 'Sistem',
+  settings: 'Pengaturan',
+  accounting: 'Akuntansi',
+  purchases: 'Pembelian',
+  sales: 'Penjualan',
+  inventory: 'Persediaan',
+  tax: 'Perpajakan',
+  reconciliation: 'Rekonsiliasi',
+  payroll: 'Payroll',
+}
 const crumbs = computed(() =>
   route.path
     .split('/')
     .filter(Boolean)
     .map((x: string, i: number, a: string[]) => ({
-      label: x.replaceAll('-', ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+      label: labels[x] ?? x.replaceAll('-', ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
       to: '/' + a.slice(0, i + 1).join('/'),
     })),
 )

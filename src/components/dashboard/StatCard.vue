@@ -27,8 +27,8 @@ const icons: Record<string, Component> = {
     <div class="flex items-start justify-between">
       <div>
         <p class="text-sm font-medium text-slate-500">{{ metric.label }}</p>
-        <p class="mt-2 text-xl font-bold tracking-tight">
-          {{ formatCurrency(metric.value, true) }}
+        <p class="mt-2 text-xl font-bold tracking-tight" :title="formatCurrency(metric.value)">
+          {{ formatCurrency(metric.value) }}
         </p>
       </div>
       <span
@@ -47,10 +47,13 @@ const icons: Record<string, Component> = {
       </span>
     </div>
     <p class="mt-3 text-xs">
-      <b :class="metric.change >= 0 ? 'text-emerald-600' : 'text-red-600'">
-        {{ metric.change > 0 ? '+' : '' }}{{ metric.change }}%
-      </b>
-      <span class="text-slate-400">dari bulan lalu</span>
+      <template v-if="metric.change !== null">
+        <b :class="metric.change >= 0 ? 'text-emerald-600' : 'text-red-600'">
+          {{ metric.change > 0 ? '+' : '' }}{{ metric.change }}%
+        </b>
+        <span class="ml-1 text-slate-400">{{ metric.comparisonLabel ?? 'dari bulan lalu' }}</span>
+      </template>
+      <span v-else class="text-slate-400">Belum ada data pembanding</span>
     </p>
   </article>
 </template>

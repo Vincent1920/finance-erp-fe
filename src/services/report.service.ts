@@ -5,6 +5,7 @@ export interface ReportAccountLine {
   accountId: number
   code: string
   name: string
+  reportGroup?: string | null
   amount: string
 }
 
@@ -15,16 +16,24 @@ export interface ProfitLossReport {
   operatingProfit: string
   profitBeforeTax: string
   netProfit: string
+  classificationWarnings: Array<{
+    accountId: number
+    code: string
+    name: string
+    message: string
+  }>
 }
 
 export interface BalanceSheetReport {
   asOfDate: string
+  fiscalPeriod: { dateFrom: string; dateTo: string }
   sections: {
     assets: { accounts: ReportAccountLine[]; total: string }
     liabilities: { accounts: ReportAccountLine[]; total: string }
     equity: {
       accounts: ReportAccountLine[]
       accountTotal: string
+      unclosedPriorEarnings: string
       currentYearEarnings: string
       total: string
     }
@@ -59,6 +68,7 @@ export interface AgingRow {
   original_amount: string | number
   paid_amount: string | number
   returned_amount: string | number
+  credit_amount: string | number
   outstanding_amount: string | number
   days_overdue: number
   aging_bucket: 'current' | '1-30' | '31-60' | '61-90' | '>90'
@@ -73,6 +83,9 @@ export interface AgingReport {
 
 export interface LedgerRow {
   id: number
+  account_id: number
+  journal_id: number
+  opening_balance: string | number
   account_code: string
   account_name: string
   journal_number: string
@@ -108,6 +121,9 @@ export interface TrialBalanceReport {
 }
 export interface ReconciliationRow {
   type: string
+  accountId: number
+  accountCode: string
+  accountName: string
   subledger: string | number
   generalLedger: string | number
   difference: string | number
@@ -148,10 +164,14 @@ export const reportService = {
         params: { as_of_date: asOfDate },
       })
     ).data.data,
-  generalLedger: async (dateFrom: string, dateTo: string) =>
+  generalLedger: async (
+    dateFrom: string,
+    dateTo: string,
+    filters: { account_id?: number; reference?: string; page?: number; limit?: number } = {},
+  ) =>
     (
       await api.get<PaginatedResponse<LedgerRow>>('/reports/general-ledger', {
-        params: { date_from: dateFrom, date_to: dateTo, limit: 100 },
+        params: { date_from: dateFrom, date_to: dateTo, limit: 100, ...filters },
       })
     ).data,
   trialBalance: async (dateFrom: string, dateTo: string) =>

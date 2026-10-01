@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SearchableSelect from '@/components/common/SearchableSelect'
 import AppBadge from '@/components/common/AppBadge.vue'
 import AppEmptyState from '@/components/common/AppEmptyState.vue'
 import AppPagination from '@/components/common/AppPagination.vue'
@@ -41,8 +42,7 @@ const statusTone = (row: ImportPreviewRow) => {
 
 const formatIssueValue = (issue: ImportIssue) => {
   if (issue.value === null || issue.value === undefined || issue.value === '') return '(kosong)'
-  const value =
-    typeof issue.value === 'object' ? JSON.stringify(issue.value) : String(issue.value)
+  const value = typeof issue.value === 'object' ? JSON.stringify(issue.value) : String(issue.value)
   return value.length > 80 ? `${value.slice(0, 77)}...` : value
 }
 </script>
@@ -56,7 +56,7 @@ const formatIssueValue = (issue: ImportIssue) => {
           Periksa baris bermasalah sebelum mengonfirmasi import.
         </p>
       </div>
-      <select
+      <SearchableSelect
         :value="statusFilter"
         class="field w-full sm:w-48"
         aria-label="Filter status validasi"
@@ -67,7 +67,7 @@ const formatIssueValue = (issue: ImportIssue) => {
         <option value="warning">Peringatan</option>
         <option value="error">Error</option>
         <option value="duplicate">Duplikat</option>
-      </select>
+      </SearchableSelect>
     </header>
 
     <div

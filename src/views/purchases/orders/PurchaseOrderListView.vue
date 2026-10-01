@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SearchableSelect from '@/components/common/SearchableSelect'
 import { onMounted, ref, watch } from 'vue'
 import { Eye, Pencil, Plus, Search } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
@@ -112,10 +113,10 @@ onMounted(load)
             placeholder="Cari nomor, pemasok, referensi..."
           />
         </label>
-        <select v-model="status" class="field max-w-56">
+        <SearchableSelect v-model="status" class="field max-w-56">
           <option value="">Semua status</option>
           <option v-for="(v, k) in labels" :key="k" :value="k">{{ v }}</option>
-        </select>
+        </SearchableSelect>
       </div>
       <p v-if="error" class="m-4 rounded bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
       <div class="overflow-x-auto">

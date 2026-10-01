@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppCombobox from './AppCombobox.vue'
 const props = withDefaults(
   defineProps<{
     modelValue?: string | number | null
@@ -14,10 +15,8 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{ 'update:modelValue': [value: string | number | null] }>()
-
-const handleChange = (event: Event) => {
-  const raw = (event.target as HTMLSelectElement).value
-  if (!raw) {
+const handleChange = (raw: string | number | Array<string | number> | null) => {
+  if (raw === null || Array.isArray(raw) || raw === '') {
     emit('update:modelValue', null)
     return
   }
@@ -25,22 +24,16 @@ const handleChange = (event: Event) => {
 }
 </script>
 <template>
-  <label class="block text-sm">
-    <span v-if="label" class="mb-1.5 block font-medium text-slate-700">
-      {{ label }}
-      <b v-if="required" class="text-red-500">*</b>
-    </span>
-    <select
-      :value="modelValue"
-      class="field"
-      :class="error && 'border-red-400'"
-      :required="required"
-      :disabled="disabled"
-      @change="handleChange"
-    >
-      <option value="">{{ emptyLabel }}</option>
-      <option v-for="o in options" :key="o.value" :value="o.value">{{ o.label }}</option>
-    </select>
-    <span v-if="error" class="mt-1 block text-xs text-red-600">{{ error }}</span>
-  </label>
+  <AppCombobox
+    :model-value="modelValue"
+    :label="label"
+    :options="options"
+    :empty-label="emptyLabel"
+    :placeholder="`Ketik kode atau nama ${label?.toLocaleLowerCase() || 'pilihan'}…`"
+    :disabled="disabled"
+    :required="required"
+    :error="error"
+    result-label="pilihan"
+    @update:model-value="handleChange"
+  />
 </template>

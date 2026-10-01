@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SearchableSelect from '@/components/common/SearchableSelect'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   AlertTriangle,
@@ -95,8 +96,7 @@ const isJobTerminal = computed(() =>
   Boolean(currentJob.value && TERMINAL_STATUSES.has(currentJob.value.status)),
 )
 const hasBlockingErrors = computed(
-  () =>
-    Boolean(currentJob.value?.errorRows) && errorPolicy.value === 'all_or_nothing',
+  () => Boolean(currentJob.value?.errorRows) && errorPolicy.value === 'all_or_nothing',
 )
 const canPreview = computed(
   () =>
@@ -195,10 +195,14 @@ const loadConfig = async () => {
   try {
     configs.value = await dataImportService.config()
     const firstVisible = visibleConfigs.value[0]
-    if (!importType.value || !visibleConfigs.value.some((config) => config.type === importType.value)) {
+    if (
+      !importType.value ||
+      !visibleConfigs.value.some((config) => config.type === importType.value)
+    ) {
       importType.value = firstVisible?.type ?? ''
     }
-    if (!firstVisible) configError.value = 'Akun Anda belum memiliki izin untuk tipe import apa pun.'
+    if (!firstVisible)
+      configError.value = 'Akun Anda belum memiliki izin untuk tipe import apa pun.'
   } catch (error) {
     configs.value = []
     importType.value = ''
@@ -269,7 +273,10 @@ const pollCurrentJob = async () => {
     } else if (currentJob.value.status === 'completed_with_errors') {
       notifications.push('Import selesai dengan beberapa baris gagal.', 'info')
     } else if (currentJob.value.status === 'failed') {
-      notifications.push(currentJob.value.errorMessage ?? 'Import gagal dan telah di-rollback.', 'error')
+      notifications.push(
+        currentJob.value.errorMessage ?? 'Import gagal dan telah di-rollback.',
+        'error',
+      )
     }
   } catch (error) {
     previewError.value = getApiErrorMessage(error, 'Status import gagal diperbarui.')
@@ -423,16 +430,21 @@ onBeforeUnmount(clearPolling)
 
     <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <div class="mb-2 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+        <div
+          class="mb-2 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700"
+        >
           <ShieldCheck class="h-3.5 w-3.5" />
           Validasi sebelum masuk database
         </div>
         <h1 class="text-2xl font-bold">Data Import</h1>
         <p class="mt-1 max-w-2xl text-sm text-slate-500">
-          Upload CSV atau Excel, tinjau hasil validasi, lalu konfirmasi data yang aman untuk diproses.
+          Upload CSV atau Excel, tinjau hasil validasi, lalu konfirmasi data yang aman untuk
+          diproses.
         </p>
       </div>
-      <div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 shadow-sm">
+      <div
+        class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 shadow-sm"
+      >
         <span class="grid h-7 w-7 place-items-center rounded-lg bg-emerald-50 text-emerald-700">
           <Check class="h-4 w-4" />
         </span>
@@ -440,7 +452,9 @@ onBeforeUnmount(clearPolling)
       </div>
     </div>
 
-    <div class="mb-5 grid grid-cols-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div
+      class="mb-5 grid grid-cols-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+    >
       <div
         v-for="(step, index) in ['Upload', 'Validasi', 'Konfirmasi', 'Selesai']"
         :key="step"
@@ -510,9 +524,10 @@ onBeforeUnmount(clearPolling)
           <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
             <label class="block text-sm">
               <span class="mb-1.5 block font-medium text-slate-700">
-                Tipe import <b class="text-red-500">*</b>
+                Tipe import
+                <b class="text-red-500">*</b>
               </span>
-              <select
+              <SearchableSelect
                 v-model="importType"
                 class="field"
                 :disabled="isLoadingConfig || Boolean(currentJob)"
@@ -521,7 +536,7 @@ onBeforeUnmount(clearPolling)
                 <option v-for="config in visibleConfigs" :key="config.type" :value="config.type">
                   {{ config.label }}
                 </option>
-              </select>
+              </SearchableSelect>
               <span v-if="selectedDefinition" class="mt-1.5 block text-xs text-slate-500">
                 {{ selectedDefinition.description }}
               </span>
@@ -530,7 +545,7 @@ onBeforeUnmount(clearPolling)
             <div>
               <span class="mb-1.5 block text-sm font-medium text-slate-700">Template</span>
               <div class="flex gap-2">
-                <select
+                <SearchableSelect
                   v-model="templateFormat"
                   class="field w-24"
                   :disabled="!selectedConfig || isDownloadingTemplate"
@@ -538,7 +553,7 @@ onBeforeUnmount(clearPolling)
                 >
                   <option value="xlsx">XLSX</option>
                   <option value="csv">CSV</option>
-                </select>
+                </SearchableSelect>
                 <AppButton
                   variant="secondary"
                   :icon="Download"
@@ -555,7 +570,9 @@ onBeforeUnmount(clearPolling)
           <label
             class="relative block cursor-pointer rounded-2xl border-2 border-dashed p-7 text-center transition"
             :class="[
-              isDragging ? 'border-blue-500 bg-blue-50' : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50',
+              isDragging
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50',
               (!selectedConfig || currentJob) && 'cursor-not-allowed opacity-60',
               fileError && 'border-red-300 bg-red-50',
             ]"
@@ -574,7 +591,9 @@ onBeforeUnmount(clearPolling)
             />
 
             <template v-if="selectedFile">
-              <span class="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-emerald-100 text-emerald-700">
+              <span
+                class="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-emerald-100 text-emerald-700"
+              >
                 <FileCheck2 class="h-6 w-6" />
               </span>
               <p class="mt-3 font-semibold text-slate-800">{{ selectedFile.name }}</p>
@@ -585,16 +604,24 @@ onBeforeUnmount(clearPolling)
                 class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-700"
                 @click.prevent="resetFileInput"
               >
-                <X class="h-3.5 w-3.5" /> Ganti file
+                <X class="h-3.5 w-3.5" />
+                Ganti file
               </button>
             </template>
             <template v-else>
-              <span class="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-500">
+              <span
+                class="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-500"
+              >
                 <FileSpreadsheet class="h-6 w-6" />
               </span>
-              <p class="mt-3 font-semibold text-slate-700">Tarik file ke sini atau klik untuk memilih</p>
+              <p class="mt-3 font-semibold text-slate-700">
+                Tarik file ke sini atau klik untuk memilih
+              </p>
               <p class="mt-1 text-xs text-slate-500">
-                CSV atau XLSX<span v-if="selectedConfig"> · Maks. {{ formatBytes(selectedConfig.maxFileSize) }}</span>
+                CSV atau XLSX
+                <span v-if="selectedConfig">
+                  · Maks. {{ formatBytes(selectedConfig.maxFileSize) }}
+                </span>
               </p>
             </template>
           </label>
@@ -602,7 +629,8 @@ onBeforeUnmount(clearPolling)
 
           <div class="flex flex-wrap items-center justify-between gap-3">
             <p class="text-xs leading-5 text-slate-500">
-              File hanya di-upload untuk validasi. Data belum disimpan sampai Anda menekan tombol konfirmasi import.
+              File hanya di-upload untuk validasi. Data belum disimpan sampai Anda menekan tombol
+              konfirmasi import.
             </p>
             <AppButton
               :icon="UploadCloud"
@@ -624,11 +652,15 @@ onBeforeUnmount(clearPolling)
             </div>
             <div class="flex justify-between gap-3">
               <dt class="text-slate-500">Ukuran maksimum</dt>
-              <dd class="font-semibold">{{ selectedConfig ? formatBytes(selectedConfig.maxFileSize) : '—' }}</dd>
+              <dd class="font-semibold">
+                {{ selectedConfig ? formatBytes(selectedConfig.maxFileSize) : '—' }}
+              </dd>
             </div>
             <div class="flex justify-between gap-3">
               <dt class="text-slate-500">Baris maksimum</dt>
-              <dd class="font-semibold">{{ selectedConfig?.maxRows.toLocaleString('id-ID') ?? '—' }}</dd>
+              <dd class="font-semibold">
+                {{ selectedConfig?.maxRows.toLocaleString('id-ID') ?? '—' }}
+              </dd>
             </div>
             <div class="flex justify-between gap-3">
               <dt class="text-slate-500">Duplikat</dt>
@@ -661,7 +693,9 @@ onBeforeUnmount(clearPolling)
           <div>
             <div class="flex flex-wrap items-center gap-2">
               <h2 class="font-semibold">Ringkasan validasi</h2>
-              <span class="rounded-md bg-slate-100 px-2 py-1 font-mono text-[11px] font-semibold text-slate-600">
+              <span
+                class="rounded-md bg-slate-100 px-2 py-1 font-mono text-[11px] font-semibold text-slate-600"
+              >
                 {{ currentJob.importNumber }}
               </span>
             </div>
@@ -673,14 +707,17 @@ onBeforeUnmount(clearPolling)
             v-if="isJobProcessing"
             class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700"
           >
-            <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            <span
+              class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"
+            />
             Memproses di server
           </span>
           <span
             v-else-if="currentJob.status === 'completed'"
             class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700"
           >
-            <CheckCircle2 class="h-4 w-4" /> Selesai
+            <CheckCircle2 class="h-4 w-4" />
+            Selesai
           </span>
         </div>
 
@@ -707,7 +744,11 @@ onBeforeUnmount(clearPolling)
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               <label
                 class="cursor-pointer rounded-xl border p-4 transition"
-                :class="errorPolicy === 'all_or_nothing' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'"
+                :class="
+                  errorPolicy === 'all_or_nothing'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-slate-200 hover:border-slate-300'
+                "
               >
                 <div class="flex items-start gap-3">
                   <input
@@ -719,13 +760,19 @@ onBeforeUnmount(clearPolling)
                   />
                   <span>
                     <b class="block text-sm">Batalkan seluruh import</b>
-                    <small class="mt-1 block leading-5 text-slate-500">Rollback semua perubahan jika satu data kritis gagal.</small>
+                    <small class="mt-1 block leading-5 text-slate-500">
+                      Rollback semua perubahan jika satu data kritis gagal.
+                    </small>
                   </span>
                 </div>
               </label>
               <label
                 class="cursor-pointer rounded-xl border p-4 transition"
-                :class="errorPolicy === 'valid_only' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'"
+                :class="
+                  errorPolicy === 'valid_only'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-slate-200 hover:border-slate-300'
+                "
               >
                 <div class="flex items-start gap-3">
                   <input
@@ -737,7 +784,9 @@ onBeforeUnmount(clearPolling)
                   />
                   <span>
                     <b class="block text-sm">Import data valid saja</b>
-                    <small class="mt-1 block leading-5 text-slate-500">Error dan duplikat dilewati serta dicatat di laporan.</small>
+                    <small class="mt-1 block leading-5 text-slate-500">
+                      Error dan duplikat dilewati serta dicatat di laporan.
+                    </small>
                   </span>
                 </div>
               </label>
@@ -747,16 +796,18 @@ onBeforeUnmount(clearPolling)
           <div class="space-y-4">
             <label v-if="selectedConfig?.supportsImportAs" class="block text-sm">
               <span class="mb-1.5 block font-medium text-slate-700">Import sebagai</span>
-              <select v-model="importAs" class="field" :disabled="isJobProcessing">
+              <SearchableSelect v-model="importAs" class="field" :disabled="isJobProcessing">
                 <option value="draft">Draft — dapat diperiksa dan diedit</option>
                 <option value="submitted">Submitted — siap untuk proses berikutnya</option>
-              </select>
+              </SearchableSelect>
               <span class="mt-1.5 block text-xs text-slate-500">
                 Import tidak pernah membuat transaksi Posted secara otomatis.
               </span>
             </label>
 
-            <div class="flex items-start gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+            <div
+              class="flex items-start gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4"
+            >
               <ShieldCheck class="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
               <div>
                 <b class="block text-sm text-emerald-800">Skip duplicate aktif</b>
@@ -774,8 +825,10 @@ onBeforeUnmount(clearPolling)
         >
           <AlertTriangle class="mt-0.5 h-5 w-5 shrink-0" />
           <p>
-            Terdapat {{ currentJob.errorRows.toLocaleString('id-ID') }} baris error. Perbaiki file dan upload ulang,
-            atau pilih <b>Import data valid saja</b> jika kebijakan perusahaan mengizinkan.
+            Terdapat {{ currentJob.errorRows.toLocaleString('id-ID') }} baris error. Perbaiki file
+            dan upload ulang, atau pilih
+            <b>Import data valid saja</b>
+            jika kebijakan perusahaan mengizinkan.
           </p>
         </div>
       </section>
@@ -789,8 +842,19 @@ onBeforeUnmount(clearPolling)
         :total="previewTotal"
         :per-page="PREVIEW_PAGE_SIZE"
         :status-filter="previewStatus"
-        @change-page="previewPage = $event; loadPreviewRows()"
-        @change-filter="previewStatus = $event; previewPage = 1; loadPreviewRows(1)"
+        @change-page="
+          ($event) => {
+            previewPage = $event
+            loadPreviewRows()
+          }
+        "
+        @change-filter="
+          ($event) => {
+            previewStatus = $event
+            previewPage = 1
+            loadPreviewRows(1)
+          }
+        "
       />
 
       <section class="panel mb-6 flex flex-wrap items-center justify-between gap-4 p-5">
@@ -810,7 +874,7 @@ onBeforeUnmount(clearPolling)
             Batal
           </AppButton>
           <template v-if="currentJob.errorRows > 0 || currentJob.warningRows > 0">
-            <select
+            <SearchableSelect
               v-model="errorReportFormat"
               class="field w-24"
               :disabled="isDownloadingErrors"
@@ -818,7 +882,7 @@ onBeforeUnmount(clearPolling)
             >
               <option value="csv">CSV</option>
               <option value="xlsx">XLSX</option>
-            </select>
+            </SearchableSelect>
             <AppButton
               variant="secondary"
               :icon="Download"
@@ -854,7 +918,12 @@ onBeforeUnmount(clearPolling)
       :total="historyTotal"
       :per-page="HISTORY_PAGE_SIZE"
       @refresh="loadHistory"
-      @change-page="historyPage = $event; loadHistory()"
+      @change-page="
+        ($event) => {
+          historyPage = $event
+          loadHistory()
+        }
+      "
       @download-errors="downloadHistoryErrors"
     />
 

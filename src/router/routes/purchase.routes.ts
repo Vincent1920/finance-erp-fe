@@ -74,11 +74,25 @@ export const purchaseRoutes: RouteRecordRaw[] = [
       permission: 'purchase-invoices.view',
     },
   },
-  createModuleRoute('/purchases/returns', 'Retur Pembelian'),
+  {
+    path: '/purchases/settlements',
+    name: 'purchase-settlements',
+    component: () => import('@/views/payments/SettlementWorkspaceView.vue'),
+    meta: {
+      title: 'Pelunasan Pembelian',
+      requiresAuth: true,
+      permission: 'supplier-payments.view',
+    },
+  },
+  {
+    path: '/purchases/returns',
+    component: () => import('@/views/purchases/PurchaseReturnView.vue'),
+    meta: { title: 'Retur Pembelian', requiresAuth: true, permission: 'purchase-returns.view' },
+  },
   {
     path: '/purchases/payables',
     name: 'purchase-payables',
-    component: () => import('@/views/purchases/payables/PayableAgingView.vue'),
-    meta: { title: 'Utang Usaha', requiresAuth: true, permission: 'purchase-invoices.view' },
+    component: () => import('@/views/reports/AgingView.vue'),
+    meta: { title: 'Utang Usaha', requiresAuth: true, permission: 'reports.view' },
   },
 ]

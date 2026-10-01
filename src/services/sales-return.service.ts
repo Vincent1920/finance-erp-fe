@@ -33,6 +33,7 @@ export const salesReturnService = {
     (await api.get<PaginatedResponse<SalesReturn>>(ep, { params: p })).data,
   get: async (id: number) => (await api.get<ApiResponse<SalesReturn>>(`${ep}/${id}`)).data.data,
   create: async (p: {
+    return_stock?: boolean
     return_date: string
     sales_invoice_id: number
     reference: string | null

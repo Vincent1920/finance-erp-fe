@@ -11,6 +11,17 @@ export interface DashboardSummary {
   payables: number
   inventoryValue: number
   bankBalance: number
+  workQueue: {
+    overdueInvoices: number
+    receivablesDueThisWeek: number
+    payablesDueThisWeek: number
+    pendingApprovals: number
+    unmatchedBankLines: number
+    openTaxPeriods: number
+    lowStockItems: number
+    unfinishedPayroll: number
+    periodsToClose: number
+  }
   monthly: Array<{ month: string; sales: number; purchases: number }>
   recentJournals: Array<{
     id: number

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppSelect from '@/components/common/AppSelect.vue'
+import AppNumberInput from '@/components/common/AppNumberInput.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppButton from '@/components/common/AppButton.vue'
@@ -19,22 +21,22 @@ const form = reactive({
   reference: '',
   description: '',
   currency: 'IDR',
-  exchange_rate: '1',
+  exchange_rate: 1,
   lines: [
-    { accountId: 0, description: '', debit: '0', credit: '0' },
-    { accountId: 0, description: '', debit: '0', credit: '0' },
+    { accountId: 0, description: '', debit: 0, credit: 0 },
+    { accountId: 0, description: '', debit: 0, credit: 0 },
   ],
 })
 const debit = computed(() => form.lines.reduce((sum, line) => sum + Number(line.debit || 0), 0))
 const credit = computed(() => form.lines.reduce((sum, line) => sum + Number(line.credit || 0), 0))
 const balanced = computed(() => debit.value > 0 && Math.abs(debit.value - credit.value) < 0.005)
-const addLine = () => form.lines.push({ accountId: 0, description: '', debit: '0', credit: '0' })
+const addLine = () => form.lines.push({ accountId: 0, description: '', debit: 0, credit: 0 })
 const removeLine = (index: number) => {
   if (form.lines.length > 2) form.lines.splice(index, 1)
 }
 const load = async () => {
   accounts.value = (
-    await accountService.list({
+    await accountService.all({
       limit: 500,
       is_active: true,
       is_posting: true,
@@ -48,13 +50,13 @@ const load = async () => {
     reference: journal.reference || '',
     description: journal.description,
     currency: journal.currency,
-    exchange_rate: String(journal.exchange_rate),
+    exchange_rate: Number(journal.exchange_rate),
     lines:
       journal.lines?.map((line) => ({
         accountId: line.account_id,
         description: line.description || '',
-        debit: String(line.debit),
-        credit: String(line.credit),
+        debit: Number(line.debit),
+        credit: Number(line.credit),
       })) || form.lines,
   })
 }
@@ -66,7 +68,16 @@ const save = async () => {
   saving.value = true
   error.value = ''
   try {
-    const payload = { ...form, reference: form.reference || null }
+    const payload = {
+      ...form,
+      exchange_rate: String(form.exchange_rate),
+      reference: form.reference || null,
+      lines: form.lines.map((line) => ({
+        ...line,
+        debit: String(line.debit),
+        credit: String(line.credit),
+      })),
+    }
     const result = id.value
       ? await journalService.update(id.value, payload)
       : await journalService.create(payload)
@@ -105,14 +116,7 @@ onMounted(
         </label>
         <label class="text-sm">
           Kurs
-          <input
-            v-model="form.exchange_rate"
-            type="number"
-            min="0.00000001"
-            step="0.00000001"
-            class="field mt-1"
-            required
-          />
+          <AppNumberInput v-model="form.exchange_rate" :min="0.00000001" :decimals="8" class="mt-1" required />
         </label>
         <label class="text-sm md:col-span-4">
           Deskripsi
@@ -138,31 +142,23 @@ onMounted(
             <tbody>
               <tr v-for="(line, index) in form.lines" :key="index" class="border-t">
                 <td class="p-2">
-                  <select v-model.number="line.accountId" class="field min-w-64" required>
-                    <option :value="0" disabled>Pilih akun</option>
-                    <option v-for="account in accounts" :key="account.id" :value="account.id">
-                      {{ account.code }} — {{ account.name }}
-                    </option>
-                  </select>
+                  <AppSelect
+                    :model-value="line.accountId"
+                    :options="
+                      accounts.map((a) => ({ value: a.id, label: a.code + ' — ' + a.name }))
+                    "
+                    value-type="number"
+                    empty-label="Pilih akun"
+                    required
+                    @update:model-value="line.accountId = Number($event || 0)"
+                  />
                 </td>
                 <td class="p-2"><input v-model="line.description" class="field" /></td>
                 <td class="p-2">
-                  <input
-                    v-model="line.debit"
-                    class="field text-right"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                  />
+                  <AppNumberInput v-model="line.debit" :min="0" :decimals="2" />
                 </td>
                 <td class="p-2">
-                  <input
-                    v-model="line.credit"
-                    class="field text-right"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                  />
+                  <AppNumberInput v-model="line.credit" :min="0" :decimals="2" />
                 </td>
                 <td class="p-2">
                   <button type="button" class="text-red-600" @click="removeLine(index)">

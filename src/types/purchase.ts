@@ -101,9 +101,15 @@ export interface PurchaseInvoiceLine {
   tax_code_id: number | null
   tax_code: string | null
   tax_amount: string | number
+  withholding_tax_id?: number | null
+  withholding_tax_code?: string | null
+  withholding_rate?: string | number
+  withholding_amount?: string | number
   subtotal: string | number
 }
 export interface PurchaseInvoice {
+  withholding_tax_id?: number | null
+  withholding_amount?: string | number
   id: number
   invoice_number: string
   supplier_invoice_number: string
@@ -145,6 +151,7 @@ export interface PurchaseInvoiceLinePayload {
   discount: number
   discount_percent: number
   tax_code_id: number | null
+  withholding_tax_id?: number | null
   expense_account_id?: number | null
 }
 export interface PurchaseInvoicePayload {

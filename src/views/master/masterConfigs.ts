@@ -253,7 +253,14 @@ export const customerWorkspaceConfig: MasterWorkspaceConfig = {
   fields: [
     { key: 'code', label: 'Kode pelanggan', required: true, minLength: 2, maxLength: 30 },
     { key: 'name', label: 'Nama pelanggan', required: true, minLength: 2, maxLength: 191 },
-    { key: 'tax_number', label: 'NPWP / nomor pajak', nullable: true, maxLength: 50 },
+    {
+      key: 'tax_number',
+      label: 'NPWP (16 digit)',
+      required: true,
+      minLength: 16,
+      maxLength: 16,
+      help: 'Masukkan 16 angka tanpa tanda baca.',
+    },
     { key: 'email', label: 'Email', type: 'email', nullable: true },
     { key: 'phone', label: 'Telepon', nullable: true, maxLength: 50 },
     { key: 'city', label: 'Kota', nullable: true, maxLength: 100 },
@@ -315,7 +322,14 @@ export const supplierWorkspaceConfig: MasterWorkspaceConfig = {
   fields: [
     { key: 'code', label: 'Kode pemasok', required: true, minLength: 2, maxLength: 30 },
     { key: 'name', label: 'Nama pemasok', required: true, minLength: 2, maxLength: 191 },
-    { key: 'tax_number', label: 'NPWP / nomor pajak', nullable: true, maxLength: 50 },
+    {
+      key: 'tax_number',
+      label: 'NPWP (16 digit)',
+      required: true,
+      minLength: 16,
+      maxLength: 16,
+      help: 'Masukkan 16 angka tanpa tanda baca.',
+    },
     { key: 'email', label: 'Email', type: 'email', nullable: true },
     { key: 'phone', label: 'Telepon', nullable: true, maxLength: 50 },
     { key: 'city', label: 'Kota', nullable: true, maxLength: 100 },
@@ -415,6 +429,7 @@ export const taxCodeWorkspaceConfig: MasterWorkspaceConfig = {
     { key: 'code', label: 'Kode', sortable: true },
     { key: 'name', label: 'Nama pajak', sortable: true },
     { key: 'tax_type', label: 'Jenis' },
+    { key: 'reporting_type', label: 'Kelompok pelaporan' },
     {
       key: 'rate',
       label: 'Tarif',
@@ -445,6 +460,20 @@ export const taxCodeWorkspaceConfig: MasterWorkspaceConfig = {
       min: 0,
       max: 100,
       step: 0.0001,
+    },
+    {
+      key: 'reporting_type',
+      label: 'Kelompok rekonsiliasi pajak',
+      type: 'select',
+      nullable: true,
+      options: [
+        { label: 'PPN', value: 'ppn' },
+        { label: 'PPh 21 Pegawai', value: 'pph21_employee' },
+        { label: 'PPh 21 Nonpegawai', value: 'pph21_non_employee' },
+        { label: 'PPh 23 (Unifikasi)', value: 'pph23' },
+        { label: 'PPh 4(2) (Unifikasi)', value: 'pph42' },
+        { label: 'Lainnya', value: 'other' },
+      ],
     },
     {
       key: 'input_tax_account_id',
@@ -606,12 +635,34 @@ export const itemWorkspaceConfig: MasterWorkspaceConfig = {
     },
     {
       key: 'unit_id',
-      label: 'Satuan',
+      label: 'Satuan transaksi / stok',
+      help: 'Kuantitas dan harga transaksi memakai satuan ini. Satuan terkecil di bawah dipakai untuk rincian konversi laporan.',
       type: 'select',
       required: true,
       valueType: 'number',
       options: () =>
         optionsFrom(unitService, (unit) => `${unit.code} — ${unit.name}`, { is_active: true }),
+    },
+    {
+      key: 'smallest_unit_id',
+      label: 'Satuan terkecil',
+      type: 'select',
+      nullable: true,
+      valueType: 'number',
+      options: () =>
+        optionsFrom(unitService, (unit) => `${unit.code} — ${unit.name}`, { is_active: true }),
+      help: 'Contoh: pcs. Kosong berarti sama dengan satuan stok.',
+    },
+    {
+      key: 'smallest_unit_factor',
+      label: 'Isi satuan terkecil per satuan stok',
+      type: 'number',
+      min: 1,
+      max: 1000000,
+      step: 1,
+      defaultValue: 1,
+      required: true,
+      help: 'Contoh: 1 dus = 12 pcs, isi 12. Tidak mengubah kuantitas jurnal stok.',
     },
     { key: 'description', label: 'Deskripsi', type: 'textarea', nullable: true, span: 2 },
     {

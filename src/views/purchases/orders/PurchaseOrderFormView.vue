@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import SearchableSelect from '@/components/common/SearchableSelect'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { Plus, Save, Trash2 } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 import AppButton from '@/components/common/AppButton.vue'
+import AppNumberInput from '@/components/common/AppNumberInput.vue'
 import AppBreadcrumb from '@/components/layout/AppBreadcrumb.vue'
 import { itemService } from '@/services/item.service'
 import { purchaseOrderService } from '@/services/purchase-order.service'
@@ -190,7 +192,7 @@ onMounted(load)
         </label>
         <label class="form-label">
           Pemasok
-          <select
+          <SearchableSelect
             v-model.number="form.supplier_id"
             required
             class="field mt-1"
@@ -200,16 +202,16 @@ onMounted(load)
             <option v-for="x in suppliers" :key="x.id" :value="x.id">
               {{ x.code }} · {{ x.name }}
             </option>
-          </select>
+          </SearchableSelect>
         </label>
         <label class="form-label">
           Gudang
-          <select v-model.number="form.warehouse_id" required class="field mt-1">
+          <SearchableSelect v-model.number="form.warehouse_id" required class="field mt-1">
             <option :value="0">Pilih gudang</option>
             <option v-for="x in warehouses" :key="x.id" :value="x.id">
               {{ x.code }} · {{ x.name }}
             </option>
-          </select>
+          </SearchableSelect>
         </label>
         <label class="form-label">
           Rencana Terima
@@ -265,7 +267,7 @@ onMounted(load)
             <tbody class="divide-y">
               <tr v-for="l in form.lines" :key="l.key">
                 <td class="p-2">
-                  <select
+                  <SearchableSelect
                     v-model.number="l.item_id"
                     required
                     class="field min-w-52"
@@ -275,7 +277,7 @@ onMounted(load)
                     <option v-for="x in items" :key="x.id" :value="x.id">
                       {{ x.sku }} · {{ x.name }}
                     </option>
-                  </select>
+                  </SearchableSelect>
                 </td>
                 <td class="p-2"><input v-model="l.description" class="field min-w-40" /></td>
                 <td class="p-2">
@@ -283,27 +285,15 @@ onMounted(load)
                     v-model.number="l.quantity"
                     type="number"
                     min="0.0001"
-                    step="0.0001"
+                    step="0.1"
                     class="field w-24"
                   />
                 </td>
                 <td class="p-2">
-                  <input
-                    v-model.number="l.unit_price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    class="field w-32"
-                  />
+                  <AppNumberInput v-model="l.unit_price" :min="0" :decimals="2" class="w-32" />
                 </td>
                 <td class="p-2">
-                  <input
-                    v-model.number="l.discount_amount"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    class="field w-28"
-                  />
+                  <AppNumberInput v-model="l.discount_amount" :min="0" :decimals="2" class="w-28" />
                 </td>
                 <td class="p-2">
                   <input
@@ -316,12 +306,12 @@ onMounted(load)
                   />
                 </td>
                 <td class="p-2">
-                  <select v-model.number="l.tax_code_id" class="field min-w-32">
+                  <SearchableSelect v-model.number="l.tax_code_id" class="field min-w-32">
                     <option :value="null">Tanpa pajak</option>
                     <option v-for="x in taxes" :key="x.id" :value="x.id">
                       {{ x.code }} ({{ x.rate }}%)
                     </option>
-                  </select>
+                  </SearchableSelect>
                 </td>
                 <td class="p-2 text-right font-semibold">{{ money(amount(l)) }}</td>
                 <td>

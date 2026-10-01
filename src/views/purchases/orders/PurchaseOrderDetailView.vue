@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CancelledDeleteButton from '@/components/common/CancelledDeleteButton.vue'
 import { onMounted, ref } from 'vue'
 import { Ban, Check, Pencil, Printer } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
@@ -12,6 +13,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useNotificationStore } from '@/stores/notification.store'
 import type { PurchaseOrder, PurchaseOrderStatus } from '@/types/purchase'
 import { getApiErrorMessage } from '@/utils/error'
+import { printOrder as printConfiguredOrder } from '@/utils/print-document'
 const id = Number(useRoute().params.id),
   router = useRouter(),
   auth = useAuthStore(),
@@ -83,7 +85,7 @@ const cancel = async () => {
   await run(() => purchaseOrderService.cancel(id, reason.value), 'Purchase order dibatalkan.')
   showCancel.value = false
 }
-const printOrder = () => window.print()
+const printOrder = () => order.value && printConfiguredOrder(order.value as unknown as Record<string, any>, true).catch((e) => notice.push(getApiErrorMessage(e, 'Dokumen gagal dicetak.'), 'error'))
 const openReceipt = () => {
   receiptQuantities.value = Object.fromEntries(
     (order.value?.lines ?? []).map((line) => [
@@ -125,6 +127,13 @@ onMounted(load)
 </script>
 <template>
   <div>
+    <CancelledDeleteButton
+      v-if="order"
+      kind="purchase-orders"
+      :id="order.id"
+      :status="order.status"
+      @deleted="$router.push('/purchases/orders')"
+    />
     <AppBreadcrumb />
     <p v-if="error" class="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
     <div v-if="loading" class="panel space-y-3 p-5">

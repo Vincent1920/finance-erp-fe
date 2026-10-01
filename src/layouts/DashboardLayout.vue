@@ -18,6 +18,10 @@ const handleSearchShortcut = (event: KeyboardEvent) => {
     event.preventDefault()
     handleOpenSearch()
   }
+  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+    const form = (document.activeElement as HTMLElement | null)?.closest('form') as HTMLFormElement | null
+    if (form) { event.preventDefault(); form.requestSubmit() }
+  }
 }
 
 onMounted(() => addEventListener('keydown', handleSearchShortcut))

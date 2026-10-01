@@ -4,18 +4,32 @@ import type { EntityRecord } from '@/types/master'
 
 export interface EntityService<T extends EntityRecord> {
   list: (params?: ListQuery) => Promise<PaginatedResponse<T>>
+  all: (params?: ListQuery) => Promise<PaginatedResponse<T>>
   get: (id: number) => Promise<T>
   create: (payload: Record<string, unknown>) => Promise<T>
   update: (id: number, payload: Record<string, unknown>) => Promise<T>
   remove: (id: number) => Promise<string>
 }
 
-export const createEntityService = <T extends EntityRecord>(endpoint: string): EntityService<T> => ({
-  list: async (params = {}) =>
-    (await api.get<PaginatedResponse<T>>(endpoint, { params })).data,
+export const createEntityService = <T extends EntityRecord>(
+  endpoint: string,
+): EntityService<T> => ({
+  all: async (params = {}) => {
+    const first = (
+      await api.get<PaginatedResponse<T>>(endpoint, { params: { ...params, limit: 200, page: 1 } })
+    ).data
+    const rows = [...first.data]
+    for (let page = 2; page <= first.meta.totalPages; page++) {
+      const next = (
+        await api.get<PaginatedResponse<T>>(endpoint, { params: { ...params, limit: 200, page } })
+      ).data
+      rows.push(...next.data)
+    }
+    return { ...first, data: rows }
+  },
+  list: async (params = {}) => (await api.get<PaginatedResponse<T>>(endpoint, { params })).data,
   get: async (id) => (await api.get<ApiResponse<T>>(`${endpoint}/${id}`)).data.data,
-  create: async (payload) =>
-    (await api.post<ApiResponse<T>>(endpoint, payload)).data.data,
+  create: async (payload) => (await api.post<ApiResponse<T>>(endpoint, payload)).data.data,
   update: async (id, payload) =>
     (await api.put<ApiResponse<T>>(`${endpoint}/${id}`, payload)).data.data,
   remove: async (id) =>

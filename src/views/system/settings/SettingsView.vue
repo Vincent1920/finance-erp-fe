@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import PrintTemplateSettings from '@/components/common/PrintTemplateSettings.vue'
+import CompanyIdentitySettings from '@/components/common/CompanyIdentitySettings.vue'
+import InterfacePreferences from '@/components/common/InterfacePreferences.vue'
 import { computed, onMounted, ref } from 'vue'
 import { Save } from 'lucide-vue-next'
 import AppBreadcrumb from '@/components/layout/AppBreadcrumb.vue'
@@ -6,17 +9,24 @@ import AppButton from '@/components/common/AppButton.vue'
 import { settingsService } from '@/services/settings.service'
 import { useNotificationStore } from '@/stores/notification.store'
 import { getApiErrorMessage } from '@/utils/error'
+import api from '@/services/api/client'
+import { useAuthStore } from '@/stores/auth.store'
 
 type Setting = Awaited<ReturnType<typeof settingsService.list>>[number]
 const rows = ref<Setting[]>([]),
+  backups = ref<Array<Record<string, any>>>([]),
   activeCategory = ref(''),
   loading = ref(false),
   saving = ref(false),
   error = ref('')
 const notifications = useNotificationStore()
-const categories = computed(() => [...new Set(rows.value.map((row) => row.category))])
+const auth = useAuthStore()
+const editableRows = computed(() =>
+  rows.value.filter((row) => !row.setting_key.startsWith('document.print_template')),
+)
+const categories = computed(() => [...new Set(editableRows.value.map((row) => row.category))])
 const visibleRows = computed(() =>
-  rows.value.filter((row) => row.category === activeCategory.value),
+  editableRows.value.filter((row) => row.category === activeCategory.value),
 )
 const label = (key: string) =>
   key.replaceAll(/[._-]/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
@@ -25,12 +35,30 @@ async function load() {
   error.value = ''
   try {
     rows.value = await settingsService.list()
+    if (auth.hasPermission('backups.view')) backups.value = (await api.get('/operations/backups')).data.data
     activeCategory.value ||= categories.value[0] ?? ''
   } catch (e) {
     error.value = getApiErrorMessage(e, 'Pengaturan gagal dimuat.')
   } finally {
     loading.value = false
   }
+}
+async function createBackup() {
+  saving.value = true
+  try { await api.post('/operations/backups', { type: 'full' }); notifications.push('Backup database selesai dibuat.'); await load() }
+  catch (e) { notifications.push(getApiErrorMessage(e, 'Backup database gagal.'), 'error') } finally { saving.value = false }
+}
+async function downloadBackup(row: Record<string, any>) {
+  const response = await api.get(`/operations/backups/${row.id}/download`, { responseType: 'blob' })
+  const url = URL.createObjectURL(response.data), link = document.createElement('a')
+  link.href = url; link.download = String(row.file_name); link.click(); URL.revokeObjectURL(url)
+}
+async function restoreBackup(row: Record<string, any>) {
+  const confirmation = window.prompt(`Pemulihan akan mengganti database aktif. Ketik RESTORE ${row.backup_number}:`)
+  if (!confirmation) return
+  saving.value = true
+  try { await api.post('/operations/backups/restore', { backup_id: row.id, confirmation }); notifications.push('Database berhasil dipulihkan. Silakan masuk kembali.'); await load() }
+  catch (e) { notifications.push(getApiErrorMessage(e, 'Pemulihan database gagal.'), 'error') } finally { saving.value = false }
 }
 async function save() {
   saving.value = true
@@ -63,6 +91,13 @@ onMounted(load)
         Konfigurasi yang tersimpan pada database perusahaan.
       </p>
     </div>
+    <CompanyIdentitySettings />
+    <InterfacePreferences />
+    <PrintTemplateSettings />
+    <section v-if="auth.hasPermission('backups.view')" class="panel mb-5 p-5">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h2 class="font-bold">Backup &amp; Pemulihan</h2><p class="text-sm text-slate-500">Backup menyimpan struktur dan seluruh data dengan checksum SHA-256.</p></div><AppButton v-if="auth.hasPermission('backups.create')" :loading="saving" @click="createBackup">Buat backup penuh</AppButton></div>
+      <div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead><tr><th class="p-2">Nomor</th><th class="p-2">Dibuat</th><th class="p-2">Status</th><th class="p-2">Ukuran</th><th class="p-2">Aksi</th></tr></thead><tbody><tr v-for="backup in backups" :key="backup.id" class="border-t"><td class="p-2">{{ backup.backup_number }}</td><td class="p-2">{{ String(backup.created_at).slice(0, 19).replace('T', ' ') }}</td><td class="p-2">{{ backup.status }}</td><td class="p-2">{{ backup.file_size ? `${(Number(backup.file_size) / 1024 / 1024).toFixed(2)} MB` : '—' }}</td><td class="p-2"><AppButton v-if="backup.status === 'completed'" variant="secondary" @click="downloadBackup(backup)">Unduh</AppButton><AppButton v-if="backup.status === 'completed' && auth.hasPermission('backups.restore')" class="ml-2" variant="secondary" :disabled="saving" @click="restoreBackup(backup)">Pulihkan</AppButton></td></tr><tr v-if="!backups.length"><td colspan="5" class="p-4 text-slate-500">Belum ada backup.</td></tr></tbody></table></div>
+    </section>
     <section class="panel overflow-hidden">
       <div class="flex flex-wrap gap-2 border-b p-4">
         <button

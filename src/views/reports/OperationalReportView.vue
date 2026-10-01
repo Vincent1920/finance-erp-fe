@@ -7,6 +7,7 @@ import AppButton from '@/components/common/AppButton.vue'
 import { reportService } from '@/services/report.service'
 import { formatCurrency } from '@/utils/currency'
 import { getApiErrorMessage } from '@/utils/error'
+import { exportRows } from '@/utils/export'
 
 type Cell = string | number | boolean | null | undefined
 interface Column {
@@ -64,6 +65,8 @@ async function load() {
       const x = await reportService.subledger(dateTo.value)
       columns.value = [
         { key: 'type', label: 'Subledger' },
+        { key: 'accountCode', label: 'Nomor Akun' },
+        { key: 'accountName', label: 'Nama Akun' },
         { key: 'generalLedger', label: 'Saldo GL', money: true },
         { key: 'subledger', label: 'Saldo Subledger', money: true },
         { key: 'difference', label: 'Selisih', money: true },
@@ -97,18 +100,7 @@ async function load() {
 }
 
 function exportCsv() {
-  const csv = [
-    columns.value.map((c) => c.label),
-    ...rows.value.map((r) => columns.value.map((c) => String(r[c.key] ?? ''))),
-  ]
-    .map((line) => line.map((value) => `"${value.replaceAll('"', '""')}"`).join(','))
-    .join('\r\n')
-  const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv' }))
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `${kind.value}-${dateTo.value}.csv`
-  link.click()
-  URL.revokeObjectURL(url)
+  exportRows(`${kind.value}-${dateTo.value}`, columns.value.map((column) => [column.key, column.label]), rows.value)
 }
 watch(kind, load)
 onMounted(load)

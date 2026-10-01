@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SearchableSelect from '@/components/common/SearchableSelect'
 import { onMounted, reactive, ref } from 'vue'
 import AppBadge from '@/components/common/AppBadge.vue'
 import AppButton from '@/components/common/AppButton.vue'
@@ -180,11 +181,11 @@ onMounted(load)
         </label>
         <label class="block text-sm">
           Status
-          <select v-model="form.status" class="field mt-1">
+          <SearchableSelect v-model="form.status" class="field mt-1">
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
             <option value="locked">Locked</option>
-          </select>
+          </SearchableSelect>
         </label>
         <fieldset>
           <legend class="mb-2 text-sm font-medium">Peran</legend>

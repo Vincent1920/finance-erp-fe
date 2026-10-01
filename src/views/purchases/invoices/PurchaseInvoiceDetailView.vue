@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { printInvoice } from '@/utils/print-document'
+import CancelledDeleteButton from '@/components/common/CancelledDeleteButton.vue'
+import InvoiceSettlements from '@/components/common/InvoiceSettlements.vue'
 import { onMounted, ref } from 'vue'
 import { Ban, Check, FileCheck, RotateCcw, Send, XCircle } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
@@ -77,6 +80,25 @@ onMounted(load)
 </script>
 <template>
   <div>
+    <CancelledDeleteButton
+      v-if="invoice"
+      kind="purchase-invoices"
+      :id="invoice.id"
+      :status="invoice.status"
+      @deleted="$router.push('/purchases/invoices')"
+    />
+    <AppButton
+      v-if="invoice && auth.hasPermission('purchase-invoices.print')"
+      class="mb-3"
+      variant="secondary"
+      @click="
+        printInvoice(invoice!).catch((e) =>
+          notify.push(getApiErrorMessage(e, 'Cetak gagal.'), 'error'),
+        )
+      "
+    >
+      Cetak Invoice
+    </AppButton>
     <AppBreadcrumb />
     <p v-if="error" class="mb-4 rounded bg-red-50 p-3">{{ error }}</p>
     <div v-if="loading" class="panel p-8">Memuat...</div>
@@ -178,6 +200,9 @@ onMounted(load)
           <div>
             <dt>Total</dt>
             <dd class="font-bold">{{ money(invoice.grand_total) }}</dd>
+            <p v-if="Number(invoice.withholding_amount) > 0" class="text-xs text-slate-500">
+              Termasuk pengurangan PPh potong {{ money(invoice.withholding_amount ?? 0) }}
+            </p>
           </div>
           <div>
             <dt>Dibayar</dt>
@@ -193,16 +218,18 @@ onMounted(load)
           </div>
         </dl>
       </section>
-      <section class="panel overflow-hidden">
-        <table class="w-full text-sm">
+      <section class="panel overflow-x-auto">
+        <table class="data-table w-full min-w-[850px] text-sm">
           <thead class="bg-slate-50">
             <tr>
               <th class="p-3 text-left">Item</th>
               <th>Qty</th>
               <th>Harga</th>
               <th>Diskon</th>
-              <th>Pajak</th>
-              <th>Subtotal</th>
+              <th>PPN</th>
+              <th>PPh Potong</th>
+              <th>DPP</th>
+              <th>Nilai Tagihan</th>
             </tr>
           </thead>
           <tbody>
@@ -215,11 +242,34 @@ onMounted(load)
               <td class="text-right">{{ money(l.unit_price) }}</td>
               <td class="text-right">{{ money(l.discount) }}</td>
               <td class="text-right">{{ money(l.tax_amount) }}</td>
+              <td class="text-right text-red-600">
+                {{
+                  Number(l.withholding_amount ?? 0)
+                    ? `(${money(l.withholding_amount ?? 0)})`
+                    : money(0)
+                }}
+              </td>
               <td class="text-right font-semibold">{{ money(l.subtotal) }}</td>
+              <td class="text-right font-semibold">
+                {{
+                  money(
+                    Number(l.subtotal) + Number(l.tax_amount) - Number(l.withholding_amount ?? 0),
+                  )
+                }}
+              </td>
             </tr>
           </tbody>
         </table>
       </section>
+      <InvoiceSettlements
+        :invoice-id="invoice.id"
+        :party-id="invoice.supplier_id"
+        :sales="false"
+        :status="invoice.status"
+        :currency="invoice.currency"
+        :outstanding="invoice.outstanding_amount"
+        @saved="load"
+      />
     </template>
     <AppModal
       :open="modal !== null"

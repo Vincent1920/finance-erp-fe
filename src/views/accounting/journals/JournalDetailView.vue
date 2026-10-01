@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CancelledDeleteButton from '@/components/common/CancelledDeleteButton.vue'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppBadge from '@/components/common/AppBadge.vue'
@@ -46,6 +47,13 @@ onMounted(load)
 
 <template>
   <div>
+    <CancelledDeleteButton
+      v-if="journal"
+      kind="journals"
+      :id="journal.id"
+      :status="journal.status"
+      @deleted="$router.push('/accounting/journals')"
+    />
     <AppBreadcrumb />
     <p v-if="error" class="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
     <template v-if="journal">

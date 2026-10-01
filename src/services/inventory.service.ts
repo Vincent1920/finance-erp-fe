@@ -11,6 +11,8 @@ export interface StockOverviewRow {
   minimum_stock: string | number
   unit_code: string
   unit_symbol: string
+  smallest_unit_symbol: string
+  smallest_quantity: string | number
   warehouse_id: number
   warehouse_code: string
   warehouse_name: string

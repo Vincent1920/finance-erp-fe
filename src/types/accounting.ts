@@ -14,7 +14,8 @@ export interface Account {
 export interface DashboardMetric {
   label: string
   value: number
-  change: number
+  change: number | null
+  comparisonLabel?: string
   icon: string
   tone: 'blue' | 'green' | 'amber' | 'violet' | 'rose'
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SearchableSelect from '@/components/common/SearchableSelect'
 import { onMounted, reactive, ref } from 'vue'
 import { Eye, Plus, RefreshCw } from 'lucide-vue-next'
 import AppBadge from '@/components/common/AppBadge.vue'
@@ -27,6 +28,7 @@ const auth = useAuthStore(),
   invoice = ref<SalesInvoice | null>(null),
   invoiceId = ref(0),
   form = reactive({
+    return_stock: true,
     return_date: new Date().toISOString().slice(0, 10),
     reference: '',
     reason: '',
@@ -106,6 +108,7 @@ const create = async () => {
   try {
     await salesReturnService.create({
       return_date: form.return_date,
+      return_stock: form.return_stock,
       sales_invoice_id: invoice.value.id,
       reference: form.reference || null,
       reason: form.reason,
@@ -182,14 +185,10 @@ onMounted(load)
     </div>
     <section class="panel overflow-hidden">
       <div class="flex justify-between border-b p-4">
-        <select
-          v-model="status"
-          class="field max-w-56"
-          @change="changeFilter"
-        >
+        <SearchableSelect v-model="status" class="field max-w-56" @change="changeFilter">
           <option value="">Semua status</option>
           <option v-for="(value, key) in labels" :key="key" :value="key">{{ value }}</option>
-        </select>
+        </SearchableSelect>
         <AppButton variant="secondary" :icon="RefreshCw" :loading="loading" @click="load">
           Muat ulang
         </AppButton>
@@ -300,12 +299,7 @@ onMounted(load)
         description="Buat retur dari sales invoice yang sudah diposting."
       />
       <div class="border-t p-4">
-        <AppPagination
-          :page="page"
-          :total="total"
-          :per-page="20"
-          @change="changePage"
-        />
+        <AppPagination :page="page" :total="total" :per-page="20" @change="changePage" />
       </div>
     </section>
     <AppModal
@@ -356,7 +350,7 @@ onMounted(load)
                     type="number"
                     min="0"
                     :max="Number(line.quantity) - Number((line as any).returned_quantity ?? 0)"
-                    step="0.0001"
+                    step="0.1"
                     class="field ml-auto w-28 text-right"
                   />
                 </td>
@@ -366,6 +360,10 @@ onMounted(load)
           </table>
         </div>
       </div>
+      <label class="mt-4 flex gap-2">
+        <input v-model="form.return_stock" type="checkbox" />
+        Barang kembali ke gudang (jika tidak, hanya koreksi nilai penjualan; stok dan HPP tetap)
+      </label>
       <label class="form-label mt-4 block">
         Alasan Retur
         <textarea v-model="form.reason" class="field mt-1 min-h-20" />

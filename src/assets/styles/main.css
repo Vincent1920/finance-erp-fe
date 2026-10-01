@@ -63,13 +63,20 @@
     @apply antialiased;
     background: var(--bg-primary);
     color: var(--text-primary);
-    transition: background-color 160ms ease, color 160ms ease;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease;
   }
   button,
   input,
   select,
   textarea {
     @apply outline-none;
+  }
+  table,
+  input[type='number'],
+  input[inputmode='decimal'] {
+    font-variant-numeric: tabular-nums;
   }
 }
 @layer components {
@@ -87,37 +94,91 @@
   .field:focus {
     --tw-ring-color: var(--focus-ring);
   }
+  .data-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+  }
+  .data-table tbody tr {
+    border-bottom: 1px solid var(--border-color);
+  }
+  .data-table .sticky-identity {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background: var(--bg-surface);
+  }
+  .data-table thead .sticky-identity {
+    z-index: 15;
+    background: var(--bg-elevated);
+  }
+  .data-table tbody tr:hover .sticky-identity {
+    background: var(--bg-hover);
+  }
+  .data-table-scroll {
+    max-height: min(65vh, 48rem);
+    overflow: auto;
+  }
 }
 
 /* Map the existing neutral design utilities to the active theme tokens. */
 html:not(.light) .bg-white,
-html:not(.light) .bg-white\/95 { background-color: var(--bg-surface) !important; }
+html:not(.light) .bg-white\/95 {
+  background-color: var(--bg-surface) !important;
+}
 html:not(.light) .bg-slate-50,
-html:not(.light) .bg-slate-100 { background-color: var(--bg-elevated) !important; }
+html:not(.light) .bg-slate-100 {
+  background-color: var(--bg-elevated) !important;
+}
 html:not(.light) .hover\:bg-slate-50:hover,
-html:not(.light) .hover\:bg-slate-100:hover { background-color: var(--bg-hover) !important; }
-html:not(.light) .bg-blue-50 { background-color: var(--bg-selected) !important; }
+html:not(.light) .hover\:bg-slate-100:hover {
+  background-color: var(--bg-hover) !important;
+}
+html:not(.light) .bg-blue-50 {
+  background-color: var(--bg-selected) !important;
+}
 html:not(.light) .border-slate-100,
 html:not(.light) .border-slate-200,
 html:not(.light) .border-slate-300,
 html:not(.light) .border-t,
 html:not(.light) .border-b,
 html:not(.light) .border-l,
-html:not(.light) .border-r { border-color: var(--border-color) !important; }
+html:not(.light) .border-r {
+  border-color: var(--border-color) !important;
+}
 html:not(.light) .text-slate-900,
 html:not(.light) .text-slate-800,
-html:not(.light) .text-slate-700 { color: var(--text-primary) !important; }
+html:not(.light) .text-slate-700 {
+  color: var(--text-primary) !important;
+}
 html:not(.light) .text-slate-600,
 html:not(.light) .text-slate-500,
-html:not(.light) .text-slate-400 { color: var(--text-muted) !important; }
+html:not(.light) .text-slate-400 {
+  color: var(--text-muted) !important;
+}
 html:not(.light) input,
 html:not(.light) select,
-html:not(.light) textarea { color: var(--text-primary); }
+html:not(.light) textarea {
+  color: var(--text-primary);
+}
 html:not(.light) input::placeholder,
-html:not(.light) textarea::placeholder { color: var(--text-muted); opacity: 0.8; }
-html:not(.light) option { background: var(--bg-surface); color: var(--text-primary); }
-html:not(.light) tbody tr:hover { background-color: var(--bg-hover); }
-html:not(.light) .bg-slate-950\/40 { background-color: var(--overlay) !important; }
+html:not(.light) textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+html:not(.light) option {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+html:not(.light) tbody tr:hover {
+  background-color: var(--bg-hover);
+}
+html:not(.light) .bg-slate-950\/40 {
+  background-color: var(--overlay) !important;
+}
 
 .theme-selector {
   display: flex;
@@ -125,7 +186,10 @@ html:not(.light) .bg-slate-950\/40 { background-color: var(--overlay) !important
   gap: 0.5rem;
   color: var(--text-muted);
 }
-.theme-selector__label { font-size: 0.75rem; font-weight: 600; }
+.theme-selector__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
 .theme-selector__options {
   display: flex;
   gap: 0.125rem;
@@ -145,19 +209,39 @@ html:not(.light) .bg-slate-950\/40 { background-color: var(--overlay) !important
   font-weight: 600;
   transition: 140ms ease;
 }
-.theme-selector__button:hover { background: var(--bg-hover); color: var(--text-primary); }
-.theme-selector__button:focus-visible { box-shadow: 0 0 0 3px var(--focus-ring); }
+.theme-selector__button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.theme-selector__button:focus-visible {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
 .theme-selector__button--active {
   background: var(--bg-surface);
   color: #3b82f6;
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.16);
 }
 
-html.dark aside { background: var(--bg-sidebar) !important; }
-html.midnight aside { background: var(--bg-sidebar) !important; }
-html.midnight .panel { background: var(--bg-card); }
+html.dark aside {
+  background: var(--bg-sidebar) !important;
+}
+html.midnight aside {
+  background: var(--bg-sidebar) !important;
+}
+html.midnight .panel {
+  background: var(--bg-card);
+}
 
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar) transparent;
 }
+
+html[data-density='comfortable'] table th,
+html[data-density='comfortable'] table td { padding-top: 0.9rem !important; padding-bottom: 0.9rem !important; }
+html[data-density='compact'] table th,
+html[data-density='compact'] table td { padding-top: 0.38rem !important; padding-bottom: 0.38rem !important; }
+html[data-density='compact'] .field { padding-top: 0.38rem; padding-bottom: 0.38rem; }
+html[data-contrast='high'] :focus-visible { outline: 3px solid #f59e0b !important; outline-offset: 2px; }
+html[data-contrast='high'] { --text-muted: #475569; --border-color: #94a3b8; --border-strong: #64748b; }
+html.dark[data-contrast='high'], html.midnight[data-contrast='high'] { --text-muted: #cbd5e1; --border-color: #64748b; --border-strong: #94a3b8; }

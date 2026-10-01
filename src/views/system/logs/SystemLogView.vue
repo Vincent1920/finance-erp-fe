@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SearchableSelect from '@/components/common/SearchableSelect'
 import { computed, onMounted, ref, watch } from 'vue'
 import { Search, X } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
@@ -59,12 +60,12 @@ onMounted(load)
       <div class="flex flex-wrap gap-3 border-b p-4">
         <input v-model="dateFrom" type="date" class="field w-auto" />
         <input v-model="dateTo" type="date" class="field w-auto" />
-        <select v-if="type === 'error'" v-model="level" class="field w-auto">
+        <SearchableSelect v-if="type === 'error'" v-model="level" class="field w-auto">
           <option value="">Semua level</option>
           <option>error</option>
           <option>warn</option>
           <option>info</option>
-        </select>
+        </SearchableSelect>
         <input
           v-model="search"
           class="field min-w-56 flex-1"

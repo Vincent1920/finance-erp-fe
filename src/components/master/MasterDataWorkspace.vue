@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SearchableSelect from '@/components/common/SearchableSelect'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import {
   ArrowDownAZ,
@@ -29,6 +30,7 @@ import type {
   WorkspaceOption,
 } from '@/types/workspace'
 import { getApiErrorMessage, getValidationErrors } from '@/utils/error'
+import api from '@/services/api/client'
 
 type FormValue = string | number | boolean | null
 type FormMode = 'create' | 'edit' | 'detail'
@@ -55,6 +57,8 @@ const isSaving = ref(false)
 const isLoadingDetail = ref(false)
 const isExporting = ref(false)
 const pendingDelete = ref<EntityRecord | null>(null)
+type ItemUnit = { unit_id: number; factor_to_stock: number; is_purchase: boolean; is_sales: boolean; barcode: string; is_active: boolean; code?: string; name?: string; stock_unit_id?: number }
+const itemUnits = ref<ItemUnit[]>([])
 const isDeleting = ref(false)
 let searchTimer: ReturnType<typeof setTimeout> | undefined
 let requestSequence = 0
@@ -167,12 +171,32 @@ const openRecord = async (record: EntityRecord, mode: 'detail' | 'edit') => {
     const fresh = await props.config.service.get(record.id)
     selected.value = fresh
     populateForm(fresh)
+    if (props.config.permissionPrefix === 'items') {
+      itemUnits.value = (await api.get(`/operations/items/${record.id}/units`)).data.data.map((unit: Record<string, unknown>) => ({
+        unit_id: Number(unit.unit_id), factor_to_stock: Number(unit.factor_to_stock), is_purchase: Boolean(unit.is_purchase), is_sales: Boolean(unit.is_sales), barcode: String(unit.barcode ?? ''), is_active: Boolean(unit.is_active), code: String(unit.code), name: String(unit.name), stock_unit_id: Number(unit.stock_unit_id),
+      }))
+    }
   } catch (error) {
     notifications.push(getApiErrorMessage(error, 'Detail data gagal dimuat.'), 'error')
     modalMode.value = null
   } finally {
     isLoadingDetail.value = false
   }
+}
+function addItemUnit() {
+  const used = new Set(itemUnits.value.map((unit) => unit.unit_id))
+  const option = (options.unit_id ?? []).find((unit) => !used.has(Number(unit.value)))
+  if (!option) return
+  itemUnits.value.push({ unit_id: Number(option.value), factor_to_stock: 1, is_purchase: true, is_sales: true, barcode: '', is_active: true, code: option.label })
+}
+async function saveItemUnits() {
+  if (!selected.value) return
+  isSaving.value = true
+  try {
+    await api.put(`/operations/items/${selected.value.id}/units`, { units: itemUnits.value.map(({ unit_id, factor_to_stock, is_purchase, is_sales, barcode, is_active }) => ({ unit_id, factor_to_stock, is_purchase, is_sales, barcode: barcode || null, is_active })) })
+    notifications.push('Konversi satuan barang berhasil disimpan.')
+  } catch (error) { notifications.push(getApiErrorMessage(error, 'Konversi satuan gagal disimpan.'), 'error') }
+  finally { isSaving.value = false }
 }
 
 const closeModal = () => {
@@ -197,6 +221,8 @@ const validate = () => {
       continue
     }
     if (value === null || value === '') continue
+    if (field.key === 'tax_number' && !/^\d{16}$/.test(String(value)))
+      fieldErrors[field.key] = 'NPWP wajib tepat 16 digit angka.'
     if (field.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value))) {
       fieldErrors[field.key] = 'Format email tidak valid.'
     }
@@ -248,7 +274,9 @@ const save = async () => {
       await props.config.service.create(payloadFromForm())
       notifications.push(`${props.config.singular} berhasil ditambahkan.`)
     }
-    closeModal()
+    modalMode.value = null
+    selected.value = null
+    clearForm()
     await fetchRows()
   } catch (error) {
     const backendErrors = getValidationErrors(error)
@@ -433,7 +461,7 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
             :placeholder="`Cari ${config.singular.toLowerCase()}...`"
           />
         </label>
-        <select
+        <SearchableSelect
           v-for="filter in config.filters"
           :key="filter.key"
           v-model="filterValues[filter.key]"
@@ -444,12 +472,16 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
           <option v-for="option in filter.options" :key="option.value" :value="option.value">
             {{ option.label }}
           </option>
-        </select>
-        <select v-model.number="perPage" class="field w-28" aria-label="Baris per halaman">
+        </SearchableSelect>
+        <SearchableSelect
+          v-model.number="perPage"
+          class="field w-28"
+          aria-label="Baris per halaman"
+        >
           <option :value="10">10 baris</option>
           <option :value="20">20 baris</option>
           <option :value="50">50 baris</option>
-        </select>
+        </SearchableSelect>
         <AppButton variant="secondary" :icon="RefreshCw" :loading="isLoading" @click="fetchRows">
           Muat ulang
         </AppButton>
@@ -656,6 +688,18 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
           <p v-if="field.help && field.type !== 'checkbox'" class="mt-1 text-xs text-slate-400">
             {{ field.help }}
           </p>
+        </div>
+        <div v-if="config.permissionPrefix === 'items' && selected" class="sm:col-span-2 rounded-lg border p-4">
+          <div class="mb-3 flex items-center justify-between"><div><b>Konversi satuan transaksi</b><p class="text-xs text-slate-500">Contoh: 1 box = 12 pcs. Satuan stok utama selalu memakai faktor 1.</p></div><AppButton type="button" variant="secondary" @click="addItemUnit">Tambah satuan</AppButton></div>
+          <div v-for="(unit, index) in itemUnits" :key="unit.unit_id" class="mb-2 grid items-end gap-2 rounded bg-slate-50 p-3 md:grid-cols-6">
+            <AppSelect v-model="unit.unit_id" label="Satuan" :options="options.unit_id ?? []" value-type="number" :disabled="unit.unit_id === unit.stock_unit_id" />
+            <label class="text-sm">Faktor ke stok<input v-model.number="unit.factor_to_stock" class="field mt-1" type="number" min="0.000001" step="0.000001" :disabled="unit.unit_id === unit.stock_unit_id" /></label>
+            <label class="text-sm">Barcode<input v-model="unit.barcode" class="field mt-1" maxlength="100" /></label>
+            <label class="flex gap-2 text-sm"><input v-model="unit.is_purchase" type="checkbox" /> Pembelian</label>
+            <label class="flex gap-2 text-sm"><input v-model="unit.is_sales" type="checkbox" /> Penjualan</label>
+            <AppButton v-if="unit.unit_id !== unit.stock_unit_id" type="button" variant="secondary" @click="itemUnits.splice(index, 1)">Hapus</AppButton>
+          </div>
+          <AppButton type="button" :loading="isSaving" @click="saveItemUnits">Simpan konversi satuan</AppButton>
         </div>
       </form>
       <template #footer>

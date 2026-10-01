@@ -1,5 +1,3 @@
-import { createModuleRoute } from './createModuleRoute'
-
 export const accountingRoutes = [
   {
     path: '/accounting/journals/new',
@@ -21,10 +19,14 @@ export const accountingRoutes = [
     component: () => import('@/views/accounting/journals/JournalDetailView.vue'),
     meta: { title: 'Detail Jurnal', requiresAuth: true, permission: 'accounting.view' },
   },
-  createModuleRoute('/accounting/recurring-journals', 'Jurnal Berulang', true),
+  {
+    path: '/accounting/recurring-journals',
+    component: () => import('@/views/accounting/RecurringJournalView.vue'),
+    meta: { title: 'Jurnal Berulang', requiresAuth: true, permission: 'accounting.view' },
+  },
   {
     path: '/accounting/general-ledger',
-    component: () => import('@/views/reports/OperationalReportView.vue'),
+    component: () => import('@/views/accounting/GeneralLedgerView.vue'),
     meta: {
       title: 'Buku Besar',
       requiresAuth: true,
@@ -42,6 +44,23 @@ export const accountingRoutes = [
       report: 'trial-balance',
     },
   },
-  createModuleRoute('/accounting/closing', 'Tutup Periode'),
-  createModuleRoute('/accounting/year-end', 'Tutup Tahun', true),
+  {
+    path: '/accounting/month-end',
+    component: () => import('@/views/accounting/MonthEndDashboardView.vue'),
+    meta: {
+      title: 'Dashboard Month-end',
+      requiresAuth: true,
+      permission: 'accounting.close_period',
+    },
+  },
+  {
+    path: '/accounting/closing',
+    component: () => import('@/views/accounting/PeriodClosingView.vue'),
+    meta: { title: 'Tutup Periode', requiresAuth: true, permission: 'accounting.close_period' },
+  },
+  {
+    path: '/accounting/year-end',
+    component: () => import('@/views/accounting/YearEndClosingView.vue'),
+    meta: { title: 'Tutup Tahun', requiresAuth: true, permission: 'accounting.close_period' },
+  },
 ]

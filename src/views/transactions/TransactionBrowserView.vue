@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import SearchableSelect from '@/components/common/SearchableSelect'
+import CancelledDeleteButton from '@/components/common/CancelledDeleteButton.vue'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppBadge from '@/components/common/AppBadge.vue'
@@ -53,6 +55,15 @@ const path = (row: TransactionEntry) =>
     purchase_order: `/purchases/orders/${row.id}`,
     goods_receipt: `/purchases/receipts/${row.id}`,
   })[row.entity_type]
+const deleteKind = (row: TransactionEntry) =>
+  ({
+    sales_invoice: 'sales-invoices',
+    purchase_invoice: 'purchase-invoices',
+    journal: 'journals',
+    sales_order: 'sales-orders',
+    purchase_order: 'purchase-orders',
+    goods_receipt: 'goods-receipts',
+  })[row.entity_type]
 const tone = (value: string): 'green' | 'amber' | 'red' | 'blue' | 'slate' =>
   ['posted', 'paid', 'completed'].includes(value)
     ? 'green'
@@ -81,14 +92,14 @@ onMounted(load)
           placeholder="Cari DEMO, nomor, pihak, atau tipe"
           @keyup.enter="filter"
         />
-        <select v-model="status" class="field" @change="filter">
+        <SearchableSelect v-model="status" class="field" @change="filter">
           <option value="">Semua status</option>
           <option value="draft">Draft</option>
           <option value="pending_approval">Pending Approval</option>
           <option value="approved">Approved</option>
           <option value="posted">Posted</option>
           <option value="cancelled">Cancelled</option>
-        </select>
+        </SearchableSelect>
       </div>
       <p v-if="error" class="m-4 rounded bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
       <div class="overflow-x-auto">
@@ -102,6 +113,7 @@ onMounted(load)
               <th class="p-3 text-right">Jumlah</th>
               <th class="p-3">Status</th>
               <th class="p-3">Dibuat Oleh</th>
+              <th class="p-3">Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -123,6 +135,15 @@ onMounted(load)
                 <AppBadge :tone="tone(row.status)">{{ row.status }}</AppBadge>
               </td>
               <td class="p-3">{{ row.created_by }}</td>
+              <td class="p-3" @click.stop>
+                <CancelledDeleteButton
+                  v-if="deleteKind(row)"
+                  :kind="deleteKind(row)!"
+                  :id="Number(row.id)"
+                  :status="row.status"
+                  @deleted="load"
+                />
+              </td>
             </tr>
           </tbody>
         </table>

@@ -9,7 +9,23 @@ export const bankingRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/banking/accounts/BankAccountListView.vue'),
     meta: { title: 'Rekening Bank', requiresAuth: true, permission: 'bank-accounts.view' },
   },
-  createModuleRoute('/banking/statements', 'Mutasi Bank'),
-  createModuleRoute('/banking/reconciliation', 'Rekonsiliasi Bank'),
-  createModuleRoute('/banking/cash-book', 'Buku Kas'),
+  {
+    path: '/banking/statements',
+    component: () => import('@/views/banking/BankingWorkspaceView.vue'),
+    meta: { title: 'Mutasi Bank', requiresAuth: true, permission: 'bank-statements.view' },
+  },
+  {
+    path: '/banking/reconciliation',
+    component: () => import('@/views/banking/BankingWorkspaceView.vue'),
+    meta: {
+      title: 'Rekonsiliasi Bank',
+      requiresAuth: true,
+      permission: 'bank-reconciliations.view',
+    },
+  },
+  {
+    path: '/banking/cash-book',
+    component: () => import('@/views/banking/BankingWorkspaceView.vue'),
+    meta: { title: 'Buku Kas', requiresAuth: true, permission: 'cash-book.view' },
+  },
 ]

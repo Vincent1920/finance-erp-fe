@@ -13,6 +13,7 @@ import {
 } from '@/services/report.service'
 import { useNotificationStore } from '@/stores/notification.store'
 import { getApiErrorMessage } from '@/utils/error'
+import { exportRows } from '@/utils/export'
 import { formatCurrency } from '@/utils/currency'
 
 interface ReportLine {
@@ -31,6 +32,7 @@ const errorMessage = ref('')
 const lines = ref<ReportLine[]>([])
 const balanced = ref<boolean | null>(null)
 const difference = ref(0)
+const reportNote = ref('')
 
 const reportKind = computed(() => String(route.meta.report || 'profit-loss'))
 const reportTitle = computed(
@@ -53,16 +55,16 @@ const mapProfitLoss = (report: ProfitLossReport): ReportLine[] => [
   ...accountLines(report.sections.revenue?.accounts ?? []),
   { label: 'Total Pendapatan', value: Number(report.sections.revenue?.total ?? 0), kind: 'total' },
   { label: 'HARGA POKOK PENJUALAN', kind: 'header' },
-  ...accountLines(report.sections.cogs?.accounts ?? [], -1),
+  ...accountLines(report.sections.cogs?.accounts ?? []),
   { label: 'Laba Kotor', value: Number(report.grossProfit), kind: 'total' },
   { label: 'BEBAN OPERASIONAL', kind: 'header' },
-  ...accountLines(report.sections.operatingExpenses?.accounts ?? [], -1),
+  ...accountLines(report.sections.operatingExpenses?.accounts ?? []),
   { label: 'Laba Operasional', value: Number(report.operatingProfit), kind: 'total' },
   { label: 'PENDAPATAN / BEBAN LAIN', kind: 'header' },
   ...accountLines(report.sections.otherIncome?.accounts ?? []),
-  ...accountLines(report.sections.otherExpense?.accounts ?? [], -1),
+  ...accountLines(report.sections.otherExpense?.accounts ?? []),
   { label: 'Laba Sebelum Pajak', value: Number(report.profitBeforeTax), kind: 'total' },
-  ...accountLines(report.sections.tax?.accounts ?? [], -1),
+  ...accountLines(report.sections.tax?.accounts ?? []),
   { label: 'Laba Bersih', value: Number(report.netProfit), kind: 'total' },
 ]
 
@@ -75,7 +77,18 @@ const mapBalanceSheet = (report: BalanceSheetReport): ReportLine[] => [
   { label: 'Total Liabilitas', value: Number(report.liabilities), kind: 'total' },
   { label: 'EKUITAS', kind: 'header' },
   ...accountLines(report.sections.equity.accounts),
-  { label: 'Laba Tahun Berjalan', value: Number(report.sections.equity.currentYearEarnings) },
+  ...(Number(report.sections.equity.unclosedPriorEarnings) !== 0
+    ? [
+        {
+          label: 'Laba periode lalu yang belum ditutup',
+          value: Number(report.sections.equity.unclosedPriorEarnings),
+        },
+      ]
+    : []),
+  {
+    label: 'Laba Periode Fiskal Berjalan',
+    value: Number(report.sections.equity.currentYearEarnings),
+  },
   { label: 'Total Ekuitas', value: Number(report.equity), kind: 'total' },
   {
     label: 'Total Liabilitas & Ekuitas',
@@ -99,6 +112,7 @@ const mapCashFlow = (report: CashFlowReport): ReportLine[] => [
 const fetchReport = async () => {
   isLoading.value = true
   errorMessage.value = ''
+  reportNote.value = ''
   balanced.value = null
   try {
     if (reportKind.value === 'balance-sheet') {
@@ -106,13 +120,29 @@ const fetchReport = async () => {
       lines.value = mapBalanceSheet(report)
       balanced.value = report.balanced
       difference.value = Number(report.difference)
+      reportNote.value = `Laba periode berjalan dihitung sejak ${report.fiscalPeriod.dateFrom} sampai ${report.fiscalPeriod.dateTo}.`
+      if (Number(report.sections.equity.unclosedPriorEarnings) !== 0) {
+        reportNote.value +=
+          ' Masih ada laba atau rugi periode sebelumnya yang belum dipindahkan melalui tutup tahun.'
+      }
     } else if (reportKind.value === 'cash-flow') {
       const report = await reportService.cashFlow(dateFrom.value, dateTo.value)
       lines.value = mapCashFlow(report)
       balanced.value = report.reconciled
       difference.value = Number(report.difference)
     } else {
-      lines.value = mapProfitLoss(await reportService.profitLoss(dateFrom.value, dateTo.value))
+      const report = await reportService.profitLoss(dateFrom.value, dateTo.value)
+      lines.value = mapProfitLoss(report)
+      const notes: string[] = []
+      if (Number(report.sections.revenue?.total ?? 0) < 0)
+        notes.push(
+          'Pendapatan bersih bernilai negatif karena retur atau koreksi penjualan pada periode ini lebih besar daripada penjualan yang diposting.',
+        )
+      if (report.classificationWarnings?.length)
+        notes.push(
+          `${report.classificationWarnings.length} akun pajak masih dikenali dari nama akun. Lengkapi Kelompok Laporan pada Chart of Accounts agar klasifikasinya konsisten.`,
+        )
+      reportNote.value = notes.join(' ')
     }
   } catch (error) {
     lines.value = []
@@ -123,16 +153,14 @@ const fetchReport = async () => {
 }
 
 const exportCsv = () => {
-  const csv = [
-    'Keterangan,Nilai',
-    ...lines.value.map((line) => `"${line.label.replaceAll('"', '""')}",${line.value ?? ''}`),
-  ].join('\r\n')
-  const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }))
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `${reportKind.value}-${dateTo.value}.csv`
-  link.click()
-  URL.revokeObjectURL(url)
+  exportRows(
+    `${reportKind.value}-${dateTo.value}`,
+    [
+      ['label', 'Keterangan'],
+      ['value', 'Nilai'],
+    ],
+    lines.value,
+  )
   notifications.push('Laporan berhasil diekspor.')
 }
 
@@ -161,7 +189,12 @@ onMounted(fetchReport)
     </div>
     <section class="panel mx-auto max-w-4xl p-5 md:p-8">
       <div class="mb-6 flex flex-wrap gap-3">
-        <input v-if="reportKind !== 'balance-sheet'" v-model="dateFrom" type="date" class="field w-auto" />
+        <input
+          v-if="reportKind !== 'balance-sheet'"
+          v-model="dateFrom"
+          type="date"
+          class="field w-auto"
+        />
         <input v-model="dateTo" type="date" class="field w-auto" />
         <AppButton variant="secondary" :icon="RefreshCw" :loading="isLoading" @click="fetchReport">
           Terapkan
@@ -170,27 +203,42 @@ onMounted(fetchReport)
       <div v-if="errorMessage" class="rounded-lg bg-red-50 p-4 text-sm text-red-700">
         {{ errorMessage }}
       </div>
-      <div v-else-if="isLoading" class="space-y-3">
-        <div v-for="index in 8" :key="index" class="h-9 animate-pulse rounded bg-slate-100" />
-      </div>
-      <div v-else-if="lines.length" class="divide-y">
+      <template v-else>
         <div
-          v-for="(line, index) in lines"
-          :key="`${line.label}-${index}`"
-          class="flex justify-between gap-4 py-3"
-          :class="{
-            'mt-3 bg-slate-50 px-3 text-xs font-bold tracking-widest text-slate-500': line.kind === 'header',
-            'font-bold': line.kind === 'total',
-            'pl-5 text-sm': !line.kind,
-          }"
+          v-if="reportNote"
+          class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"
         >
-          <span>{{ line.label }}</span>
-          <span v-if="line.value !== undefined" class="tabular-nums" :class="line.value < 0 && 'text-red-600'">
-            {{ formatCurrency(line.value) }}
-          </span>
+          {{ reportNote }}
         </div>
-      </div>
-      <p v-else class="py-12 text-center text-sm text-slate-400">Tidak ada data pada periode ini.</p>
+        <div v-if="isLoading" class="space-y-3">
+          <div v-for="index in 8" :key="index" class="h-9 animate-pulse rounded bg-slate-100" />
+        </div>
+        <div v-else-if="lines.length" class="divide-y">
+          <div
+            v-for="(line, index) in lines"
+            :key="`${line.label}-${index}`"
+            class="flex justify-between gap-4 py-3"
+            :class="{
+              'mt-3 bg-slate-50 px-3 text-xs font-bold tracking-widest text-slate-500':
+                line.kind === 'header',
+              'font-bold': line.kind === 'total',
+              'pl-5 text-sm': !line.kind,
+            }"
+          >
+            <span>{{ line.label }}</span>
+            <span
+              v-if="line.value !== undefined"
+              class="tabular-nums"
+              :class="line.value < 0 && 'text-red-600'"
+            >
+              {{ formatCurrency(line.value) }}
+            </span>
+          </div>
+        </div>
+        <p v-else class="py-12 text-center text-sm text-slate-400">
+          Tidak ada data pada periode ini.
+        </p>
+      </template>
       <div
         v-if="balanced !== null && !isLoading && !errorMessage"
         class="mt-6 flex items-center gap-2 rounded-lg p-3 text-sm font-semibold"
@@ -198,7 +246,9 @@ onMounted(fetchReport)
       >
         <CheckCircle2 v-if="balanced" class="h-5 w-5" />
         <XCircle v-else class="h-5 w-5" />
-        {{ balanced ? 'Laporan terrekonsiliasi.' : `Selisih laporan: ${formatCurrency(difference)}` }}
+        {{
+          balanced ? 'Laporan terrekonsiliasi.' : `Selisih laporan: ${formatCurrency(difference)}`
+        }}
       </div>
     </section>
   </div>

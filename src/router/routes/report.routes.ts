@@ -5,13 +5,13 @@ export const reportRoutes = [
     path: '/reports/receivable-aging',
     name: 'report-receivable-aging',
     component: () => import('@/views/sales/receivables/ReceivableView.vue'),
-    meta: { title: 'Umur Piutang', requiresAuth: true, permission: 'sales-invoices.view' },
+    meta: { title: 'Umur Piutang', requiresAuth: true, permission: 'reports.view' },
   },
   {
     path: '/reports/payable-aging',
     name: 'report-payable-aging',
     component: () => import('@/views/purchases/payables/PayableAgingView.vue'),
-    meta: { title: 'Umur Utang', requiresAuth: true, permission: 'purchase-invoices.view' },
+    meta: { title: 'Umur Utang', requiresAuth: true, permission: 'reports.view' },
   },
   {
     path: '/reports/inventory',
